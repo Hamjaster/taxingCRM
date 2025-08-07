@@ -1,16 +1,20 @@
-import type React from "react";
-import { AppSidebar } from "./app-sidebar";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { DashboardHeader } from "./dashboard-header";
+"use client";
 
-interface DashboardLayoutProps {
+import type React from "react";
+import { ClientSidebar } from "./client-sidebar";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { DashboardHeader } from "@/components/admin/dashboard-header";
+
+interface ClientDashboardLayoutProps {
   children: React.ReactNode;
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+export function ClientDashboardLayout({
+  children,
+}: ClientDashboardLayoutProps) {
   return (
     <SidebarProvider defaultOpen={true}>
-      <AppSidebar />
+      <ClientSidebar />
       <SidebarInset>
         <DashboardHeader />
         <main className="flex-1 bg-gray-50">{children}</main>

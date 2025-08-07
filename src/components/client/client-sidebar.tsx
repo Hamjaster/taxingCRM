@@ -1,16 +1,15 @@
 "use client";
 import {
   LayoutDashboard,
-  Users,
-  UserCheck,
+  User,
+  CheckSquare,
   FileText,
-  PenTool,
+  Receipt,
   Settings,
   Building2,
   Menu,
   ChevronUp,
   LogOut,
-  User,
 } from "lucide-react";
 import {
   Sidebar,
@@ -41,24 +40,24 @@ const menuItems = [
     isActive: true,
   },
   {
-    title: "Client List",
-    icon: Users,
+    title: "Profile",
+    icon: User,
   },
   {
-    title: "Client Profile",
-    icon: UserCheck,
+    title: "Tasks",
+    icon: CheckSquare,
   },
   {
     title: "Documents",
     icon: FileText,
   },
   {
-    title: "Create Blog",
-    icon: PenTool,
+    title: "Invoices",
+    icon: Receipt,
   },
 ];
 
-export function AppSidebar() {
+export function ClientSidebar() {
   const router = useRouter();
   const signOut = () => {
     router.push("/");
@@ -66,16 +65,16 @@ export function AppSidebar() {
   };
   return (
     <Sidebar collapsible="icon" className="border-r border-gray-200">
-      <SidebarContent className="bg-[#e6f3eb]">
+      <SidebarContent className="bg-white">
         <SidebarGroup>
-          <div className="flex items-center justify-between px-4 py-6 group-data-[collapsible=icon]:px-1 group-data-[collapsible=icon]:justify-center">
+          <div className="flex items-center justify-between px-4 py-6 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:justify-center">
             <img src="/icons/logo.svg" alt="TaxonTrack Logo" />
             <SidebarTrigger className="h-6 w-6 group-data-[collapsible=icon]:hidden" />
           </div>
 
           {/* Collapsible trigger for collapsed state */}
           <div className="hidden group-data-[collapsible=icon]:flex justify-center px-2 pb-4">
-            <SidebarTrigger className="h-8 w-8 bg-gray-100 hover:bg-green-100 rounded-md">
+            <SidebarTrigger className="h-8 w-8 bg-gray-100 hover:bg-gray-200 rounded-md">
               <Menu className="h-4 w-4" />
             </SidebarTrigger>
           </div>
@@ -88,7 +87,7 @@ export function AppSidebar() {
                     asChild
                     isActive={item.isActive}
                     tooltip={item.title}
-                    className="  data-[active=true]:bg-green-600 data-[active=true]:text-green-600 hover:bg-green-100 group-data-[collapsible=icon]:justify-center"
+                    className="data-[active=true]:text-green-600  hover:bg-green-50 group-data-[collapsible=icon]:justify-center"
                   >
                     <a href="#" className="flex items-center gap-3 px-4 py-2">
                       <item.icon className="h-4 w-4" />
@@ -104,7 +103,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-gray-200 bg-[#e6f3eb] p-4 group-data-[collapsible=icon]:p-2">
+      <SidebarFooter className="border-t border-gray-200 bg-white p-4 group-data-[collapsible=icon]:p-2">
         <div className="mt-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

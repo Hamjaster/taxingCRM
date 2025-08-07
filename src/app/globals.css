@@ -51,8 +51,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.45 0.15 150);
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -85,8 +85,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: oklch(0.55 0.15 150);
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -182,5 +182,38 @@
   /* Font utilities */
   .font-inter {
     font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* Primary color utilities */
+  .bg-primary-500 {
+    background-color: #008433;
+  }
+
+  .bg-primary-600 {
+    background-color: #006b2a;
+  }
+
+  .bg-primary-700 {
+    background-color: #005221;
+  }
+
+  .text-primary-500 {
+    color: #008433;
+  }
+
+  .text-primary-600 {
+    color: #006b2a;
+  }
+
+  .border-primary-500 {
+    border-color: #008433;
+  }
+
+  .focus\:border-primary-500:focus {
+    border-color: #008433;
+  }
+
+  .focus\:ring-primary-500:focus {
+    --tw-ring-color: #008433;
   }
 }

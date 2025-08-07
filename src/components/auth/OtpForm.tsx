@@ -78,14 +78,12 @@ function FormField({
           disabled={disabled}
           className={`h-12 ${
             icon ? "pl-10" : ""
-          } border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition-colors`}
+          } border-gray-200 focus:border-primary-500 focus:ring-primary-500 transition-colors`}
         />
       </div>
     </div>
   );
 }
-
-import { Loader2 } from "lucide-react";
 
 interface SubmitButtonProps {
   children: ReactNode;
@@ -109,9 +107,9 @@ function SubmitButton({
       type={type}
       onClick={onClick}
       disabled={isLoading || disabled}
-      className={`w-full h-12 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-medium transition-all duration-200 transform hover:scale-[1.02] ${className}`}
+      isLoading={isLoading}
+      className={`w-full h-12 font-medium ${className}`}
     >
-      {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
       {children}
     </Button>
   );
@@ -160,7 +158,7 @@ export default function OTPForm({
         </h3>
         <p className="text-gray-600">
           Enter the 6-digit code sent to{" "}
-          <span className="font-medium text-purple-600">{phoneNumber}</span>
+          <span className="font-medium text-primary-600">{phoneNumber}</span>
         </p>
       </div>
 

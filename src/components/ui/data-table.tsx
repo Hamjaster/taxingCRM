@@ -261,7 +261,7 @@ export function DataTable<T>({
                 className={`h-8 min-w-8 border-gray-200 ${
                   currentPage === page
                     ? "bg-green-600 hover:bg-green-700 text-white border-green-600"
-                    : ""
+                    : "text-black"
                 }`}
               >
                 {page}

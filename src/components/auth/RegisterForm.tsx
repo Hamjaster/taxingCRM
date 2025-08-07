@@ -15,15 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Loader2,
-  User,
-  Mail,
-  Phone,
-  Lock,
-  UserCheck,
-  AlertCircle,
-} from "lucide-react";
+import { User, Mail, Phone, Lock, UserCheck, AlertCircle } from "lucide-react";
 import {
   setupRecaptcha,
   sendOTPWithFirebase,
@@ -31,6 +23,7 @@ import {
   clearConfirmationResult,
 } from "@/lib/firebase-auth";
 import type { RecaptchaVerifier } from "firebase/auth";
+import OTPForm from "./OtpForm";
 
 interface RegisterFormProps {
   userType?: "admin" | "client";
@@ -77,68 +70,74 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      setIsLoading(false);
-      return;
+    // For testing purposes
+    if (userType === "admin") {
+      router.push("/admin/dashboard");
+    } else {
+      router.push("/client/dashboard");
     }
 
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long");
-      setIsLoading(false);
-      return;
-    }
+    // if (formData.password !== formData.confirmPassword) {
+    //   setError("Passwords do not match");
+    //   setIsLoading(false);
+    //   return;
+    // }
 
-    try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          phone: formData.phone,
-          role: formData.role,
-        }),
-      });
+    // if (formData.password.length < 8) {
+    //   setError("Password must be at least 8 characters long");
+    //   setIsLoading(false);
+    //   return;
+    // }
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Registration failed");
-      }
+    // try {
+    //   const response = await fetch("/api/auth/register", {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({
+    //       email: formData.email,
+    //       password: formData.password,
+    //       firstName: formData.firstName,
+    //       lastName: formData.lastName,
+    //       phone: formData.phone,
+    //       role: formData.role,
+    //     }),
+    //   });
 
-      setUserId(data.userId);
-      setPhoneNumber(data.phoneNumber);
+    //   const data = await response.json();
+    //   if (!response.ok) {
+    //     throw new Error(data.error || "Registration failed");
+    //   }
 
-      if (data.needsVerification) {
-        setError(
-          "Account found but phone not verified. Sending verification code..."
-        );
-      }
+    //   setUserId(data.userId);
+    //   setPhoneNumber(data.phoneNumber);
 
-      if (recaptchaVerifier) {
-        const result = await sendOTPWithFirebase(
-          data.phoneNumber,
-          recaptchaVerifier
-        );
-        if (result.success) {
-          setShowOTP(true);
-          if (data.needsVerification) {
-            setError("");
-          }
-        } else {
-          throw new Error(result.error || "Failed to send OTP");
-        }
-      } else {
-        throw new Error("reCAPTCHA not initialized");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsLoading(false);
-    }
+    //   if (data.needsVerification) {
+    //     setError(
+    //       "Account found but phone not verified. Sending verification code..."
+    //     );
+    //   }
+
+    //   if (recaptchaVerifier) {
+    //     const result = await sendOTPWithFirebase(
+    //       data.phoneNumber,
+    //       recaptchaVerifier
+    //     );
+    //     if (result.success) {
+    //       setShowOTP(true);
+    //       if (data.needsVerification) {
+    //         setError("");
+    //       }
+    //     } else {
+    //       throw new Error(result.error || "Failed to send OTP");
+    //     }
+    //   } else {
+    //     throw new Error("reCAPTCHA not initialized");
+    //   }
+    // } catch (err) {
+    //   setError(err instanceof Error ? err.message : "An error occurred");
+    // } finally {
+    //   setIsLoading(false);
+    // }
   };
 
   const handleOTPVerification = async (otpCode: string) => {
@@ -196,9 +195,9 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
   }
 
   return (
-    <Card className="w-full shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
-      <CardContent className="p-8">
-        <form onSubmit={handleRegister} className="space-y-6">
+    <Card className="w-full shadow-2xl border-0 bg-white/80 backdrop-blur-sm ">
+      <CardContent className="px-6">
+        <form onSubmit={handleRegister} className="space-y-4">
           {error && (
             <Alert variant="destructive" className="border-red-200 bg-red-50">
               <AlertCircle className="h-4 w-4" />
@@ -208,8 +207,8 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
             </Alert>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
               <Label
                 htmlFor="firstName"
                 className="text-sm font-medium text-gray-700"
@@ -228,11 +227,11 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
                   placeholder="John"
                   required
                   disabled={isLoading}
-                  className="h-12 pl-10 border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition-colors"
+                  className="h-12 pl-10 border-gray-200 focus:border-primary-500 focus:ring-primary-500 transition-colors"
                 />
               </div>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label
                 htmlFor="lastName"
                 className="text-sm font-medium text-gray-700"
@@ -251,13 +250,13 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
                   placeholder="Doe"
                   required
                   disabled={isLoading}
-                  className="h-12 pl-10 border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition-colors"
+                  className="h-12 pl-10 border-gray-200 focus:border-primary-500 focus:ring-primary-500 transition-colors"
                 />
               </div>
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1">
             <Label
               htmlFor="email"
               className="text-sm font-medium text-gray-700"
@@ -274,12 +273,12 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
                 placeholder="john@example.com"
                 required
                 disabled={isLoading}
-                className="h-12 pl-10 border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition-colors"
+                className="h-12 pl-10 border-gray-200 focus:border-primary-500 focus:ring-primary-500 transition-colors"
               />
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1">
             <Label
               htmlFor="phone"
               className="text-sm font-medium text-gray-700"
@@ -296,7 +295,7 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
                 placeholder="+1 (555) 123-4567"
                 required
                 disabled={isLoading}
-                className="h-12 pl-10 border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition-colors"
+                className="h-12 pl-10 border-gray-200 focus:border-primary-500 focus:ring-primary-500 transition-colors"
               />
             </div>
           </div>
@@ -310,7 +309,7 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
                 value={formData.role}
                 onValueChange={(value) => handleInputChange("role", value)}
               >
-                <SelectTrigger className="h-12 border-gray-200 focus:border-purple-500 focus:ring-purple-500">
+                <SelectTrigger className="h-12 border-gray-200 focus:border-primary-500 focus:ring-primary-500">
                   <div className="flex items-center">
                     <UserCheck className="w-4 h-4 mr-2 text-gray-400" />
                     <SelectValue placeholder="Select account type" />
@@ -324,7 +323,7 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
             </div>
           )}
 
-          <div className="space-y-2">
+          <div className="space-y-1">
             <Label
               htmlFor="password"
               className="text-sm font-medium text-gray-700"
@@ -341,12 +340,12 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
                 placeholder="Enter your password"
                 required
                 disabled={isLoading}
-                className="h-12 pl-10 border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition-colors"
+                className="h-12 pl-10 border-gray-200 focus:border-primary-500 focus:ring-primary-500 transition-colors"
               />
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1">
             <Label
               htmlFor="confirmPassword"
               className="text-sm font-medium text-gray-700"
@@ -365,7 +364,7 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
                 placeholder="Confirm your password"
                 required
                 disabled={isLoading}
-                className="h-12 pl-10 border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition-colors"
+                className="h-12 pl-10 border-gray-200 focus:border-primary-500 focus:ring-primary-500 transition-colors"
               />
             </div>
           </div>
@@ -373,102 +372,13 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full h-12 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-medium transition-all duration-200 transform hover:scale-[1.02]"
+            isLoading={isLoading}
+            className="w-full h-12 font-medium"
           >
-            {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
             Create Account
           </Button>
 
           <div id="recaptcha-container-register" className="hidden"></div>
-        </form>
-      </CardContent>
-    </Card>
-  );
-}
-
-interface OTPFormProps {
-  phoneNumber: string;
-  onVerify: (otpCode: string) => void;
-  onResend: () => void;
-  isLoading: boolean;
-  error: string;
-}
-
-function OTPForm({
-  phoneNumber,
-  onVerify,
-  onResend,
-  isLoading,
-  error,
-}: OTPFormProps) {
-  const [otpCode, setOtpCode] = useState("");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onVerify(otpCode);
-  };
-
-  return (
-    <Card className="w-full shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
-      <CardContent className="p-8">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-r from-green-400 to-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Phone className="w-8 h-8 text-white" />
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">
-            Verify Your Phone
-          </h3>
-          <p className="text-gray-600">
-            Enter the 6-digit code sent to{" "}
-            <span className="font-medium text-purple-600">{phoneNumber}</span>
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <Alert variant="destructive" className="border-red-200 bg-red-50">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="text-red-800">
-                {error}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="otp" className="text-sm font-medium text-gray-700">
-              Verification Code
-            </Label>
-            <Input
-              id="otp"
-              type="text"
-              value={otpCode}
-              onChange={(e) => setOtpCode(e.target.value)}
-              placeholder="Enter 6-digit code"
-              maxLength={6}
-              required
-              disabled={isLoading}
-              className="h-12 text-center text-lg tracking-widest border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition-colors"
-            />
-          </div>
-
-          <Button
-            type="submit"
-            disabled={isLoading || otpCode.length !== 6}
-            className="w-full h-12 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-medium transition-all duration-200 transform hover:scale-[1.02]"
-          >
-            {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-            Verify Code
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full h-12 border-gray-200 hover:bg-gray-50 transition-colors bg-transparent"
-            onClick={onResend}
-            disabled={isLoading}
-          >
-            Resend Code
-          </Button>
         </form>
       </CardContent>
     </Card>
