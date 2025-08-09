@@ -10,12 +10,16 @@ export function DashboardHeader() {
       <div className="w-1/2 flex items-center gap-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <Input placeholder="Search" className="w-64 pl-10" />
+          <Input
+            placeholder="Search clients, projects..."
+            className="w-64 pl-10"
+            aria-label="Search clients and projects"
+          />
         </div>
       </div>
 
       <div className="w-1/2 flex items-center justify-end gap-4">
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon" aria-label="Notifications">
           <Bell className="h-4 w-4" />
         </Button>
 
