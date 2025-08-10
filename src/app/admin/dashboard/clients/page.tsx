@@ -1,239 +1,248 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
+
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  Users, 
-  Search, 
-  Plus, 
-  Mail, 
-  Phone, 
-  Calendar, 
-  MapPin,
-  MoreHorizontal,
-  Eye,
-  Edit,
-  Trash2
-} from "lucide-react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Search, Filter, Plus } from "lucide-react";
+import { DataTable, type Column } from "@/components/ui/data-table";
+import { CreateClientDialog } from "@/components/admin/create-client-dialog";
+import { Client } from "@/types";
 
-const clients = [
+const initialClients: Client[] = [
   {
-    id: 1,
-    name: "John Smith",
-    email: "john.smith@email.com",
-    phone: "+1 (555) 123-4567",
-    company: "Smith Consulting LLC",
+    id: "1",
+    firstName: "JOHN",
+    lastName: "SMITH",
+    spouse: "DEVINA SMITH",
+    ssn: "987-65-4321",
+    phoneNumber: "631-998-0967",
     status: "Active",
-    joinDate: "2024-01-15",
-    location: "New York, NY",
-    projects: 3,
-    avatar: "/placeholder.svg?height=40&width=40"
+    clientType: "Individual",
   },
   {
-    id: 2,
-    name: "Sarah Johnson",
-    email: "sarah.j@techcorp.com",
-    phone: "+1 (555) 234-5678",
-    company: "TechCorp Industries",
-    status: "Active",
-    joinDate: "2024-01-10",
-    location: "San Francisco, CA",
-    projects: 5,
-    avatar: "/placeholder.svg?height=40&width=40"
-  },
-  {
-    id: 3,
-    name: "Michael Brown",
-    email: "m.brown@retailplus.com",
-    phone: "+1 (555) 345-6789",
-    company: "RetailPlus Inc",
+    id: "2",
+    firstName: "JOHN",
+    lastName: "SMITH",
+    spouse: "DEVINA SMITH",
+    ssn: "987-65-4321",
+    phoneNumber: "631-998-0967",
     status: "Inactive",
-    joinDate: "2023-12-20",
-    location: "Chicago, IL",
-    projects: 2,
-    avatar: "/placeholder.svg?height=40&width=40"
+    clientType: "Individual",
   },
   {
-    id: 4,
-    name: "Emily Davis",
-    email: "emily.davis@startup.io",
-    phone: "+1 (555) 456-7890",
-    company: "Startup Innovations",
+    id: "3",
+    firstName: "Jason",
+    lastName: "Newman",
+    businessName: "Newman Corp",
+    ein: "12-3456789",
+    ssn: "987-65-4321",
+    phoneNumber: "764-88-0923",
+    email: "xshjfbksjp@yahoo.com",
+    address: "66 Broad Rd, Farmingville",
     status: "Active",
-    joinDate: "2024-01-08",
-    location: "Austin, TX",
-    projects: 4,
-    avatar: "/placeholder.svg?height=40&width=40"
+    clientType: "Business",
   },
 ];
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "Active":
-      return "bg-green-100 text-green-800";
-    case "Inactive":
-      return "bg-gray-100 text-gray-800";
-    default:
-      return "bg-gray-100 text-gray-800";
+function StatusBadge({ status }: { status: "Active" | "Inactive" }) {
+  if (status === "Active") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
+        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+        Active
+      </span>
+    );
   }
-};
 
-export default function ClientsPage() {
   return (
-    <div className="flex-1 space-y-6 p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Client Management</h1>
-          <p className="text-gray-600">Manage your clients and their information.</p>
+    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-medium">
+      <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+      Inactive
+    </span>
+  );
+}
+
+export default function ClientListPage() {
+  const [clients, setClients] = useState<Client[]>(initialClients);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [clientTypeFilter, setClientTypeFilter] = useState<string>("all");
+  const [isCreateClientOpen, setIsCreateClientOpen] = useState(false);
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+
+  // Filter clients based on search query and client type
+  const filteredClients = useMemo(() => {
+    let filtered = clients;
+
+    // Filter by client type
+    if (clientTypeFilter !== "all") {
+      filtered = filtered.filter(
+        (client) =>
+          client.clientType.toLowerCase() === clientTypeFilter.toLowerCase()
+      );
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(
+        (client) =>
+          client.firstName.toLowerCase().includes(query) ||
+          client.lastName.toLowerCase().includes(query) ||
+          client.spouse?.toLowerCase().includes(query) ||
+          client.businessName?.toLowerCase().includes(query) ||
+          client.ssn.includes(query) ||
+          client.phoneNumber.includes(query) ||
+          client.email?.toLowerCase().includes(query) ||
+          client.status.toLowerCase().includes(query)
+      );
+    }
+
+    return filtered;
+  }, [clients, searchQuery, clientTypeFilter]);
+
+  const handleAddClient = (newClient: Omit<Client, "id">) => {
+    const client: Client = {
+      ...newClient,
+      id: Date.now().toString(), // Simple ID generation
+    };
+    setClients((prev) => [...prev, client]);
+  };
+
+  const columns: Column<Client>[] = [
+    {
+      key: "taxpayer",
+      title: "Taxpayer",
+      sortable: true,
+      render: (_, row) => (
+        <div className="flex items-center gap-3">
+          <Avatar className="h-8 w-8">
+            <AvatarImage
+              src={row.avatar || "/placeholder.svg?height=32&width=32"}
+            />
+            <AvatarFallback className="bg-orange-100 text-orange-600 text-sm font-medium">
+              {row.businessName
+                ? row.businessName.charAt(0)
+                : row.firstName.charAt(0)}
+              {row.businessName
+                ? row.businessName.charAt(1)
+                : row.lastName.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
+          <span className="font-medium text-gray-900">
+            {row.businessName || `${row.firstName} ${row.lastName}`}
+          </span>
         </div>
-        <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Add New Client
+      ),
+    },
+    {
+      key: "spouse",
+      title: "Spouse",
+      sortable: true,
+      render: (_, row) => (
+        <span className="text-gray-600">
+          {row.clientType === "Business" ? row.ein : row.spouse || "-"}
+        </span>
+      ),
+    },
+    {
+      key: "ssn",
+      title: "SSN",
+      render: (value) => <span className="text-gray-600">{value}</span>,
+    },
+    {
+      key: "phoneNumber",
+      title: "Phone Number",
+      render: (value) => <span className="text-gray-600">{value}</span>,
+    },
+    {
+      key: "status",
+      title: "Status",
+      render: (value) => <StatusBadge status={value} />,
+    },
+    {
+      key: "action",
+      title: "Action",
+      render: () => (
+        <Button
+          variant="link"
+          className="p-0 h-auto text-blue-600 hover:text-blue-800 font-medium"
+        >
+          Check Details
         </Button>
+      ),
+    },
+  ];
+
+  const actions = (
+    <div className="flex items-center gap-4">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <Input
+          placeholder="Search clients..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10 w-64 border-gray-200"
+        />
       </div>
 
-      {/* Client Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Clients</p>
-                <p className="text-2xl font-bold text-gray-900">{clients.length}</p>
-              </div>
-              <Users className="h-8 w-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
+      <Button
+        variant="outline"
+        className="gap-2 border-gray-200 bg-transparent"
+      >
+        <Filter className="h-4 w-4" />
+        Filters
+      </Button>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Active Clients</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {clients.filter(client => client.status === "Active").length}
-                </p>
-              </div>
-              <Users className="h-8 w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
+      <Select value={clientTypeFilter} onValueChange={setClientTypeFilter}>
+        <SelectTrigger className="w-32 border-gray-200">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All</SelectItem>
+          <SelectItem value="individual">Individual</SelectItem>
+          <SelectItem value="business">Business</SelectItem>
+          <SelectItem value="entity">Entity</SelectItem>
+        </SelectContent>
+      </Select>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Projects</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {clients.reduce((sum, client) => sum + client.projects, 0)}
-                </p>
-              </div>
-              <Users className="h-8 w-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">New This Month</p>
-                <p className="text-2xl font-bold text-purple-600">2</p>
-              </div>
-              <Users className="h-8 w-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Search and Filter */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Client List</CardTitle>
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <Input placeholder="Search clients..." className="pl-10" />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {clients.map((client) => (
-              <div
-                key={client.id}
-                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center space-x-4">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={client.avatar} />
-                    <AvatarFallback>
-                      {client.name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{client.name}</h3>
-                    <p className="text-sm text-gray-600">{client.company}</p>
-                    <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
-                      <div className="flex items-center space-x-1">
-                        <Mail className="h-3 w-3" />
-                        <span>{client.email}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Phone className="h-3 w-3" />
-                        <span>{client.phone}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <MapPin className="h-3 w-3" />
-                        <span>{client.location}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <Badge className={getStatusColor(client.status)}>
-                      {client.status}
-                    </Badge>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {client.projects} projects
-                    </p>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Eye className="h-4 w-4 mr-2" />
-                        View Profile
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit Client
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-600">
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Client
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <Button
+        onClick={() => setIsCreateClientOpen(true)}
+        className="bg-green-600 hover:bg-green-700 gap-2"
+      >
+        <Plus className="h-4 w-4" />
+        New Client
+      </Button>
     </div>
+  );
+
+  return (
+    <>
+      <div className="flex-1 space-y-6 p-6">
+        <DataTable
+          data={filteredClients}
+          columns={columns}
+          title="Client List"
+          subtitle="Manage all Clients here"
+          actions={actions}
+          selectable={true}
+          onSelectionChange={setSelectedRows}
+          getRowId={(row) => row.id}
+        />
+      </div>
+
+      <CreateClientDialog
+        open={isCreateClientOpen}
+        onOpenChange={setIsCreateClientOpen}
+        onAddClient={handleAddClient}
+      />
+    </>
   );
 }

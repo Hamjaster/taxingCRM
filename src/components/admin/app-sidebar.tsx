@@ -97,7 +97,7 @@ export function AppSidebar() {
                       asChild
                       isActive={isActive}
                       tooltip={item.title}
-                      className="data-[active=true]:bg-green-600 data-[active=true]:text-white hover:bg-green-100 group-data-[collapsible=icon]:justify-center"
+                      className="data-[active=true]:text-green-600  hover:bg-green-100 group-data-[collapsible=icon]:justify-center"
                     >
                       <Link
                         href={item.href}

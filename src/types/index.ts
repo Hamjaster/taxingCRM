@@ -112,3 +112,96 @@ export interface CreateNoteData {
   isVisibleToClient: boolean;
   attachments?: string[];
 }
+
+
+export interface Client {
+  id: string
+  firstName: string
+  lastName: string
+  clientType: "Individual" | "Business" | "Entity"
+  status: "Active" | "Inactive"
+
+  // Basic contact info
+  ssn: string
+  phoneNumber: string
+  email?: string
+  address?: string
+  avatar?: string
+
+  // Individual specific fields
+  mi?: string
+  dateOfBirth?: string
+  profileImage?: string
+
+  // Spouse information
+  spouse?: string
+  spouseFirstName?: string
+  spouseMi?: string
+  spouseLastName?: string
+  spouseDateOfBirth?: string
+  spouseSsn?: string
+  spousePhoneNo?: string
+  spouseEmail?: string
+
+  // Dependents
+  dependents?: Array<{
+    firstName: string
+    mi: string
+    lastName: string
+    dateOfBirth: string
+    ssn: string
+    phoneNo: string
+    email: string
+  }>
+
+  // Business specific fields
+  businessName?: string
+  ein?: string
+  entityStructure?: string
+  dateBusinessFormed?: string
+  sElectionEffectiveDate?: string
+  noOfShareholders?: string
+  shareholders?: Array<{
+    ownership: string
+    firstName: string
+    mi: string
+    lastName: string
+    dateOfBirth: string
+    ssn: string
+    phoneNo: string
+    email: string
+  }>
+
+  // Entity specific fields
+  entityName?: string
+  publicationCountry?: string
+  entityEin?: string
+  entityPhoneNo?: string
+  entityEmailAddress?: string
+  entityAddress?: string
+
+  // Entity owner info
+  ownerFirstName?: string
+  ownerMi?: string
+  ownerLastName?: string
+  ownerDateOfBirth?: string
+  ownerSsn?: string
+
+  // Entity services and details
+  servicesToProvide?: string[]
+  serviceOfProcessName?: string
+  serviceOfProcessAddress?: string
+  registeredAgentName?: string
+  registeredAgentAddress?: string
+  publicationDetails?: string
+
+  // Address details
+  street?: string
+  apt?: string
+  city?: string
+  state?: string
+  zipCode?: string
+
+  // Notes
+  notes?: string
+}
