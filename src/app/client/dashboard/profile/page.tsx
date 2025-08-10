@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BusinessInfoTab } from "@/components/client/business-info-tab";
-import { DocumentsTab } from "@/components/client/documents-tab";
+import { Documents } from "@/components/ui/documents";
+import { mockFolders } from "@/types/constants";
 
 export default function ClientProfilePage() {
   const [activeTab, setActiveTab] = useState<"business" | "documents">(
@@ -72,7 +73,13 @@ export default function ClientProfilePage() {
 
         {/* Tab Content */}
         {activeTab === "business" && <BusinessInfoTab />}
-        {activeTab === "documents" && <DocumentsTab isBordered={false} />}
+        {activeTab === "documents" && (
+          <Documents
+            title="Documentations"
+            folders={mockFolders}
+            isBordered={false}
+          />
+        )}
       </div>
     </div>
   );

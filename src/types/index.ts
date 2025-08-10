@@ -205,3 +205,17 @@ export interface Client {
   // Notes
   notes?: string
 }
+
+export interface Document {
+  id: string;
+  name: string;
+  type: "pdf" | "image" | "doc";
+  createdAt: string;
+}
+
+export interface Folder {
+  id: string;
+  name: string;
+  createdAt: string;
+  documents: Document[];
+}
