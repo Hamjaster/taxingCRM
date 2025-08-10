@@ -1,14 +1,6 @@
-import { ClientDashboardLayout } from "@/components/client/client-dashboard-layout";
-import { ClientProfile } from "@/components/client/client-profile";
-import { ClientTasks } from "@/components/client/client-tasks";
+import { redirect } from "next/navigation";
 
 export default function ClientDashboard() {
-  return (
-    <ClientDashboardLayout>
-      <div className="flex-1 space-y-6 p-6">
-        <ClientProfile />
-        <ClientTasks />
-      </div>
-    </ClientDashboardLayout>
-  );
+  // Redirect to the main dashboard page
+  redirect("/client/dashboard/main");
 }

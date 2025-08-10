@@ -6,7 +6,6 @@ import {
   FileText,
   Receipt,
   Settings,
-  Building2,
   Menu,
   ChevronUp,
   LogOut,
@@ -31,34 +30,41 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 
 const menuItems = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
-    isActive: true,
+    href: "/client/dashboard/main",
   },
   {
     title: "Profile",
     icon: User,
+    href: "/client/dashboard/profile",
   },
   {
     title: "Tasks",
     icon: CheckSquare,
+    href: "/client/dashboard/tasks",
   },
   {
     title: "Documents",
     icon: FileText,
+    href: "/client/dashboard/documents",
   },
   {
     title: "Invoices",
     icon: Receipt,
+    href: "/client/dashboard/invoices",
   },
 ];
 
 export function ClientSidebar() {
   const router = useRouter();
+  const pathname = usePathname();
+
   const signOut = () => {
     router.push("/");
     // Implement sign out logic here
@@ -81,23 +87,29 @@ export function ClientSidebar() {
 
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={item.isActive}
-                    tooltip={item.title}
-                    className="data-[active=true]:text-green-600  hover:bg-green-50 group-data-[collapsible=icon]:justify-center"
-                  >
-                    <a href="#" className="flex items-center gap-3 px-4 py-2">
-                      <item.icon className="h-4 w-4" />
-                      <span className="group-data-[collapsible=icon]:sr-only">
-                        {item.title}
-                      </span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {menuItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.title}
+                      className="data-[active=true]:text-green-600  hover:bg-green-50 group-data-[collapsible=icon]:justify-center"
+                    >
+                      <Link
+                        href={item.href}
+                        className="flex items-center gap-3 px-4 py-2"
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span className="group-data-[collapsible=icon]:sr-only">
+                          {item.title}
+                        </span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

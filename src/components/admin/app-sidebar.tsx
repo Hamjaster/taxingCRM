@@ -32,34 +32,41 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 
 const menuItems = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
-    isActive: true,
+    href: "/admin/dashboard/main",
   },
   {
     title: "Client List",
     icon: Users,
+    href: "/admin/dashboard/clients",
   },
   {
     title: "Client Profile",
     icon: UserCheck,
+    href: "/admin/dashboard/profile",
   },
   {
     title: "Documents",
     icon: FileText,
+    href: "/admin/dashboard/documents",
   },
   {
     title: "Create Blog",
     icon: PenTool,
+    href: "/admin/dashboard/blog",
   },
 ];
 
 export function AppSidebar() {
   const router = useRouter();
+  const pathname = usePathname();
+
   const signOut = () => {
     router.push("/");
     // Implement sign out logic here
@@ -82,23 +89,29 @@ export function AppSidebar() {
 
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={item.isActive}
-                    tooltip={item.title}
-                    className="  data-[active=true]:bg-green-600 data-[active=true]:text-green-600 hover:bg-green-100 group-data-[collapsible=icon]:justify-center"
-                  >
-                    <a href="#" className="flex items-center gap-3 px-4 py-2">
-                      <item.icon className="h-4 w-4" />
-                      <span className="group-data-[collapsible=icon]:sr-only">
-                        {item.title}
-                      </span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {menuItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.title}
+                      className="data-[active=true]:bg-green-600 data-[active=true]:text-white hover:bg-green-100 group-data-[collapsible=icon]:justify-center"
+                    >
+                      <Link
+                        href={item.href}
+                        className="flex items-center gap-3 px-4 py-2"
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span className="group-data-[collapsible=icon]:sr-only">
+                          {item.title}
+                        </span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
