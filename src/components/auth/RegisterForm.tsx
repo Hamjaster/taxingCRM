@@ -71,73 +71,75 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
     setIsLoading(true);
     setError("");
     // For testing purposes
-    if (userType === "admin") {
-      router.push("/admin/dashboard");
-    } else {
-      router.push("/client/dashboard");
+    // if (userType === "admin") {
+    //   router.push("/admin/dashboard");
+    // } else {
+    //   router.push("/client/dashboard");
+    // }
+
+    // Working Code
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
     }
 
-    // if (formData.password !== formData.confirmPassword) {
-    //   setError("Passwords do not match");
-    //   setIsLoading(false);
-    //   return;
-    // }
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      setIsLoading(false);
+      return;
+    }
 
-    // if (formData.password.length < 8) {
-    //   setError("Password must be at least 8 characters long");
-    //   setIsLoading(false);
-    //   return;
-    // }
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          role: formData.role,
+        }),
+      });
 
-    // try {
-    //   const response = await fetch("/api/auth/register", {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify({
-    //       email: formData.email,
-    //       password: formData.password,
-    //       firstName: formData.firstName,
-    //       lastName: formData.lastName,
-    //       phone: formData.phone,
-    //       role: formData.role,
-    //     }),
-    //   });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Registration failed");
+      }
 
-    //   const data = await response.json();
-    //   if (!response.ok) {
-    //     throw new Error(data.error || "Registration failed");
-    //   }
+      setUserId(data.userId);
+      setPhoneNumber(data.phoneNumber);
 
-    //   setUserId(data.userId);
-    //   setPhoneNumber(data.phoneNumber);
+      if (data.needsVerification) {
+        setError(
+          "Account found but phone not verified. Sending verification code..."
+        );
+      }
 
-    //   if (data.needsVerification) {
-    //     setError(
-    //       "Account found but phone not verified. Sending verification code..."
-    //     );
-    //   }
-
-    //   if (recaptchaVerifier) {
-    //     const result = await sendOTPWithFirebase(
-    //       data.phoneNumber,
-    //       recaptchaVerifier
-    //     );
-    //     if (result.success) {
-    //       setShowOTP(true);
-    //       if (data.needsVerification) {
-    //         setError("");
-    //       }
-    //     } else {
-    //       throw new Error(result.error || "Failed to send OTP");
-    //     }
-    //   } else {
-    //     throw new Error("reCAPTCHA not initialized");
-    //   }
-    // } catch (err) {
-    //   setError(err instanceof Error ? err.message : "An error occurred");
-    // } finally {
-    //   setIsLoading(false);
-    // }
+      if (recaptchaVerifier) {
+        const result = await sendOTPWithFirebase(
+          data.phoneNumber,
+          recaptchaVerifier
+        );
+        if (result.success) {
+          setShowOTP(true);
+          if (data.needsVerification) {
+            setError("");
+          }
+        } else {
+          throw new Error(result.error || "Failed to send OTP");
+        }
+      } else {
+        throw new Error("reCAPTCHA not initialized");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleOTPVerification = async (otpCode: string) => {
