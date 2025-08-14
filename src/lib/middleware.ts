@@ -4,7 +4,9 @@ import { AuthUser } from '@/types';
 
 export function getAuthUser(request: NextRequest): AuthUser | null {
   try {
-    const token = request.cookies.get('auth-token')?.value;
+    // take token from bearer token from headers
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.split(' ')[1];
     
     if (!token) {
       return null;

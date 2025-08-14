@@ -8,15 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Mail, Lock, AlertCircle, Phone } from "lucide-react";
-import {
-  setupRecaptcha,
-  sendOTPWithFirebase,
-  verifyOTPWithFirebase,
-  clearConfirmationResult,
-} from "@/lib/firebase-auth";
-import type { RecaptchaVerifier } from "firebase/auth";
+import { Mail, Lock, AlertCircle } from "lucide-react";
 import OTPForm from "./OtpForm";
+import { useAppDispatch, useAppSelector } from "@/hooks/redux";
+import {
+  loginUser,
+  clearError,
+  setUser,
+  sendOTP,
+  verifyOTP,
+} from "@/store/slices/authSlice";
 
 interface LoginFormProps {
   userType: "admin" | "client";
@@ -25,134 +26,91 @@ interface LoginFormProps {
 export default function LoginForm({ userType }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const [showOTP, setShowOTP] = useState(false);
-  const [userId, setUserId] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [recaptchaVerifier, setRecaptchaVerifier] =
-    useState<RecaptchaVerifier | null>(null);
+  const [otpEmail, setOtpEmail] = useState("");
+  const [remainingTime, setRemainingTime] = useState(0);
   const router = useRouter();
 
+  const dispatch = useAppDispatch();
+  const { isLoading, error, isAuthenticated, user, role } = useAppSelector(
+    (state: any) => state.auth
+  );
+
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const verifier = setupRecaptcha("recaptcha-container-login");
-      setRecaptchaVerifier(verifier);
-    }
-
-    return () => {
-      clearConfirmationResult();
-      if (recaptchaVerifier) {
-        recaptchaVerifier.clear();
-      }
-    };
-  }, []);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    setError("");
-
-    //for testing
-    if (userType === "admin") {
-      router.push("/admin/dashboard");
-    } else {
-      router.push("/client/dashboard");
-    }
-
-    // try {
-    //   const response = await fetch("/api/auth/login", {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify({ email, password }),
-    //   });
-
-    //   const data = await response.json();
-    //   if (!response.ok) {
-    //     if (data.needsVerification && data.userId && data.phoneNumber) {
-    //       setUserId(data.userId);
-    //       setPhoneNumber(data.phoneNumber);
-
-    //       if (recaptchaVerifier) {
-    //         const result = await sendOTPWithFirebase(
-    //           data.phoneNumber,
-    //           recaptchaVerifier
-    //         );
-    //         if (result.success) {
-    //           setShowOTP(true);
-    //           setError("");
-    //         } else {
-    //           throw new Error(result.error || "Failed to send OTP");
-    //         }
-    //       } else {
-    //         throw new Error("reCAPTCHA not initialized");
-    //       }
-    //     } else {
-    //       throw new Error(data.error || "Login failed");
-    //     }
-    //   } else {
-    //     if (data.user.role === "admin") {
-    //       router.push("/admin/dashboard");
-    //     } else {
-    //       router.push("/client/dashboard");
-    //     }
-    //   }
-    // } catch (err) {
-    //   setError(err instanceof Error ? err.message : "An error occurred");
-    // } finally {
-    //   setIsLoading(false);
-    // }
-  };
-
-  const handleOTPVerification = async (otpCode: string) => {
-    setIsLoading(true);
-    setError("");
-
-    try {
-      const firebaseResult = await verifyOTPWithFirebase(otpCode);
-      if (!firebaseResult.success) {
-        throw new Error(firebaseResult.error || "Firebase verification failed");
-      }
-
-      const response = await fetch("/api/auth/complete-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          firebaseUid: firebaseResult.firebaseUser?.uid,
-        }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Verification completion failed");
-      }
-
-      if (data.user.role === "admin") {
+    if (isAuthenticated && user && role) {
+      if (role === "admin") {
         router.push("/admin/dashboard");
       } else {
         router.push("/client/dashboard");
       }
+    }
+  }, [isAuthenticated, user, role, router]);
+
+  useEffect(() => {
+    // Clear error when component mounts or user type changes
+    dispatch(clearError());
+  }, [dispatch, userType]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    dispatch(clearError());
+
+    try {
+      const result = await dispatch(
+        loginUser({ email, password, userType }) as any
+      );
+
+      if (loginUser.fulfilled.match(result)) {
+        // Check if OTP is required (for client login)
+        if (result.payload.requiresOTP) {
+          setOtpEmail(email);
+          setRemainingTime(result.payload.remainingTime || 10);
+          setShowOTP(true);
+        }
+        // For admin login, user will be redirected via useEffect
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsLoading(false);
+      console.error("Login error:", err);
+    }
+  };
+
+  const handleOTPVerification = async (otpCode: string) => {
+    try {
+      const result = await dispatch(
+        verifyOTP({ email: otpEmail, otp: otpCode }) as any
+      );
+
+      if (verifyOTP.fulfilled.match(result)) {
+        // Success - user will be redirected via useEffect
+        console.log("OTP verification successful");
+      }
+    } catch (err: any) {
+      console.error("OTP verification error:", err);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    try {
+      const result = await dispatch(sendOTP(otpEmail) as any);
+
+      if (sendOTP.fulfilled.match(result)) {
+        setRemainingTime(result.payload.expiryMinutes || 10);
+        dispatch(clearError());
+      }
+    } catch (err: any) {
+      console.error("Resend OTP error:", err);
     }
   };
 
   if (showOTP) {
     return (
       <OTPForm
-        phoneNumber={phoneNumber}
+        email={otpEmail}
         onVerify={handleOTPVerification}
-        onResend={() => {
-          if (recaptchaVerifier) {
-            sendOTPWithFirebase(phoneNumber, recaptchaVerifier);
-          }
-        }}
+        onResend={handleResendOTP}
         isLoading={isLoading}
-        error={error}
+        error={error || ""}
+        remainingTime={remainingTime}
       />
     );
   }
@@ -218,12 +176,16 @@ export default function LoginForm({ userType }: LoginFormProps) {
             type="submit"
             disabled={isLoading}
             isLoading={isLoading}
-            className="w-full h-12 font-medium "
+            className="w-full h-12 font-medium"
           >
-            Sign In
+            {userType === "client" ? "Sign In & Send Code" : "Sign In"}
           </Button>
 
-          <div id="recaptcha-container-login" className="hidden"></div>
+          {userType === "client" && (
+            <p className="text-xs text-gray-500 text-center">
+              For security, clients will receive a verification code via email
+            </p>
+          )}
         </form>
       </CardContent>
     </Card>

@@ -12,11 +12,6 @@ export default function AdminRegisterPage() {
           linkText: "Sign in here",
           href: "/admin/login",
         },
-        {
-          text: "Looking for client registration?",
-          linkText: "Client Registration",
-          href: "/client/register",
-        },
       ]}
     >
       <RegisterForm userType="admin" />

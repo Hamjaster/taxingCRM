@@ -1,4 +1,5 @@
 import { ClientDashboardLayout } from "@/components/client/client-dashboard-layout";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -6,8 +7,8 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <ClientDashboardLayout>
-      {children}
-    </ClientDashboardLayout>
+    <AuthGuard requiredRole="client">
+      <ClientDashboardLayout>{children}</ClientDashboardLayout>
+    </AuthGuard>
   );
 }

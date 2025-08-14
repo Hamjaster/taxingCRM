@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,49 +11,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Filter, Plus } from "lucide-react";
+import { Search, Filter, Plus, MoreVertical } from "lucide-react";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { CreateClientDialog } from "@/components/admin/create-client-dialog";
-import { Client } from "@/types";
+import { Client, ClientUser } from "@/types";
+import { useAppDispatch, useAppSelector } from "@/hooks/redux";
+import {
+  fetchAdminClients,
+  createClient,
+  updateClientStatus,
+} from "@/store/slices/authSlice";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-const initialClients: Client[] = [
-  {
-    id: "1",
-    firstName: "JOHN",
-    lastName: "SMITH",
-    spouse: "DEVINA SMITH",
-    ssn: "987-65-4321",
-    phoneNumber: "631-998-0967",
-    status: "Active",
-    clientType: "Individual",
-  },
-  {
-    id: "2",
-    firstName: "JOHN",
-    lastName: "SMITH",
-    spouse: "DEVINA SMITH",
-    ssn: "987-65-4321",
-    phoneNumber: "631-998-0967",
-    status: "Inactive",
-    clientType: "Individual",
-  },
-  {
-    id: "3",
-    firstName: "Jason",
-    lastName: "Newman",
-    businessName: "Newman Corp",
-    ein: "12-3456789",
-    ssn: "987-65-4321",
-    phoneNumber: "764-88-0923",
-    email: "xshjfbksjp@yahoo.com",
-    address: "66 Broad Rd, Farmingville",
-    status: "Active",
-    clientType: "Business",
-  },
-];
-
-function StatusBadge({ status }: { status: "Active" | "Inactive" }) {
-  if (status === "Active") {
+function StatusBadge({ status }: { status: boolean }) {
+  if (status) {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
         <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
@@ -71,11 +47,22 @@ function StatusBadge({ status }: { status: "Active" | "Inactive" }) {
 }
 
 export default function ClientListPage() {
-  const [clients, setClients] = useState<Client[]>(initialClients);
+  const dispatch = useAppDispatch();
+  const { clients, isLoading, error, hasFetchedClients } = useAppSelector(
+    (state) => state.auth
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [clientTypeFilter, setClientTypeFilter] = useState<string>("all");
   const [isCreateClientOpen, setIsCreateClientOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
+
+  useEffect(() => {
+    console.log("hasFetchedClients", hasFetchedClients);
+    if (!hasFetchedClients) {
+      dispatch(fetchAdminClients());
+      console.log("fetching clients");
+    }
+  }, [hasFetchedClients, dispatch]);
 
   // Filter clients based on search query and client type
   const filteredClients = useMemo(() => {
@@ -94,29 +81,44 @@ export default function ClientListPage() {
       const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(
         (client) =>
-          client.firstName.toLowerCase().includes(query) ||
-          client.lastName.toLowerCase().includes(query) ||
-          client.spouse?.toLowerCase().includes(query) ||
+          client.firstName?.toLowerCase().includes(query) ||
+          client.lastName?.toLowerCase().includes(query) ||
+          client.spouseFirstName?.toLowerCase().includes(query) ||
           client.businessName?.toLowerCase().includes(query) ||
-          client.ssn.includes(query) ||
-          client.phoneNumber.includes(query) ||
-          client.email?.toLowerCase().includes(query) ||
-          client.status.toLowerCase().includes(query)
+          client.ssn?.includes(query) ||
+          client.phone?.includes(query) ||
+          client.email?.toLowerCase().includes(query)
       );
     }
 
     return filtered;
   }, [clients, searchQuery, clientTypeFilter]);
 
-  const handleAddClient = (newClient: Omit<Client, "id">) => {
-    const client: Client = {
-      ...newClient,
-      id: Date.now().toString(), // Simple ID generation
-    };
-    setClients((prev) => [...prev, client]);
+  const handleAddClient = async (clientData: any) => {
+    const resultAction = await dispatch(createClient(clientData));
+    if (createClient.fulfilled.match(resultAction)) {
+      console.log("Client created successfully");
+      setIsCreateClientOpen(false);
+    } else {
+      console.error("Failed to create client:", resultAction.payload);
+    }
   };
 
-  const columns: Column<Client>[] = [
+  const handleToggleClientStatus = async (
+    clientId: string,
+    currentStatus: boolean
+  ) => {
+    const resultAction = await dispatch(
+      updateClientStatus({ clientId, isActive: !currentStatus })
+    );
+    if (updateClientStatus.fulfilled.match(resultAction)) {
+      console.log("Client status updated successfully");
+    } else {
+      console.error("Failed to update client status:", resultAction.payload);
+    }
+  };
+
+  const columns: Column<ClientUser>[] = [
     {
       key: "taxpayer",
       title: "Taxpayer",
@@ -144,39 +146,54 @@ export default function ClientListPage() {
     },
     {
       key: "spouse",
-      title: "Spouse",
+      title: "Spouse/EIN",
       sortable: true,
       render: (_, row) => (
         <span className="text-gray-600">
-          {row.clientType === "Business" ? row.ein : row.spouse || "-"}
+          {row.clientType === "Business"
+            ? row.ein
+            : row.spouseFirstName
+            ? `${row.spouseFirstName} ${row.spouseLastName}`
+            : "-"}
         </span>
       ),
     },
     {
       key: "ssn",
       title: "SSN",
-      render: (value) => <span className="text-gray-600">{value}</span>,
+      render: (_, row) => (
+        <span className="text-gray-600">{row.ssn || "-"}</span>
+      ),
     },
     {
-      key: "phoneNumber",
+      key: "phone",
       title: "Phone Number",
       render: (value) => <span className="text-gray-600">{value}</span>,
     },
     {
-      key: "status",
+      key: "isActive",
       title: "Status",
       render: (value) => <StatusBadge status={value} />,
     },
     {
       key: "action",
       title: "Action",
-      render: () => (
-        <Button
-          variant="link"
-          className="p-0 h-auto text-blue-600 hover:text-blue-800 font-medium"
-        >
-          Check Details
-        </Button>
+      render: (_, row) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => handleToggleClientStatus(row._id, row.isActive)}
+            >
+              {row.isActive ? "Deactivate" : "Activate"} Client
+            </DropdownMenuItem>
+            <DropdownMenuItem>View Details</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ),
     },
   ];
@@ -225,17 +242,34 @@ export default function ClientListPage() {
 
   return (
     <>
+      {error && (
+        <div className="flex-1 p-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <h3 className="text-red-800 font-medium">Error Loading Clients</h3>
+            <p className="text-red-600 text-sm mt-1">{error}</p>
+          </div>
+        </div>
+      )}
       <div className="flex-1 space-y-6 p-6">
-        <DataTable
-          data={filteredClients}
-          columns={columns}
-          title="Client List"
-          subtitle="Manage all Clients here"
-          actions={actions}
-          selectable={true}
-          onSelectionChange={setSelectedRows}
-          getRowId={(row) => row.id}
-        />
+        {isLoading && clients.length === 0 ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+              <p className="text-gray-500 mt-2">Loading clients...</p>
+            </div>
+          </div>
+        ) : (
+          <DataTable
+            data={filteredClients}
+            columns={columns}
+            title="Client List"
+            subtitle="Manage all Clients here"
+            actions={actions}
+            selectable={true}
+            onSelectionChange={setSelectedRows}
+            getRowId={(row) => row._id}
+          />
+        )}
       </div>
 
       <CreateClientDialog

@@ -25,7 +25,7 @@ import { Client } from "@/types";
 interface CreateClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddClient: (client: Omit<Client, "id">) => void;
+  onAddClient: (clientData: any) => void;
 }
 
 type ClientType = "Individual" | "Business" | "Entity";
@@ -70,6 +70,7 @@ interface FormData {
   ssn: string;
   phoneNo: string;
   email: string;
+  password: string;
   status: string;
   profileImage?: string;
   // Spouse fields
@@ -139,6 +140,7 @@ const initialFormData: FormData = {
   ssn: "",
   phoneNo: "",
   email: "",
+  password: "",
   status: "Active",
   spouseFirstName: "",
   spouseMi: "",
@@ -269,45 +271,97 @@ export function CreateClientDialog({
   };
 
   const handleSubmit = () => {
-    // Create client object based on type with ALL collected data
-    let newClient: Omit<Client, "id">;
+    // Validate required fields before submission
+    const validateRequiredFields = () => {
+      const errors: string[] = [];
+
+      if (formData.clientType === "Business") {
+        if (!formData.businessName.trim())
+          errors.push("Business Name is required");
+        if (!formData.shareholders[0]?.firstName?.trim())
+          errors.push("Shareholder First Name is required");
+        if (!formData.shareholders[0]?.lastName?.trim())
+          errors.push("Shareholder Last Name is required");
+        if (!formData.shareholders[0]?.phoneNo?.trim())
+          errors.push("Shareholder Phone Number is required");
+        if (!formData.shareholders[0]?.email?.trim())
+          errors.push("Login Email is required");
+        if (!formData.password.trim()) errors.push("Password is required");
+      } else if (formData.clientType === "Entity") {
+        if (!formData.entityName.trim()) errors.push("Entity Name is required");
+        if (!formData.entityPhoneNo.trim())
+          errors.push("Entity Phone Number is required");
+        if (!formData.entityEmailAddress.trim())
+          errors.push("Login Email is required");
+        if (!formData.ownerFirstName.trim())
+          errors.push("Owner First Name is required");
+        if (!formData.ownerLastName.trim())
+          errors.push("Owner Last Name is required");
+        if (!formData.password.trim()) errors.push("Password is required");
+      } else {
+        if (!formData.firstName.trim()) errors.push("First Name is required");
+        if (!formData.lastName.trim()) errors.push("Last Name is required");
+        if (!formData.phoneNo.trim()) errors.push("Phone Number is required");
+        if (!formData.email.trim()) errors.push("Login Email is required");
+        if (!formData.password.trim()) errors.push("Password is required");
+      }
+
+      if (errors.length > 0) {
+        alert("Please fill in all required fields:\n" + errors.join("\n"));
+        return false;
+      }
+      return true;
+    };
+
+    if (!validateRequiredFields()) {
+      return;
+    }
+
+    // Create client object that matches API expectations
+    let newClient: any;
 
     if (formData.clientType === "Business") {
       newClient = {
         firstName: formData.businessName.split(" ")[0] || "Business",
         lastName:
           formData.businessName.split(" ").slice(1).join(" ") || "Client",
+        email: formData.shareholders[0]?.email || "business@example.com",
+        password: formData.password,
+        phone: formData.shareholders[0]?.phoneNo || "",
+        clientType: "Business",
         businessName: formData.businessName,
         ein: formData.ein,
+        ssn: formData.ein, // Use EIN as SSN for business
+        address: `${formData.street} ${formData.apt}, ${formData.city}`.trim(),
+        // Additional business fields
         entityStructure: formData.entityStructure,
         dateBusinessFormed: formData.dateBusinessFormed,
         sElectionEffectiveDate: formData.sElectionEffectiveDate,
         noOfShareholders: formData.noOfShareholders,
         shareholders: formData.shareholders,
-        ssn: formData.ein, // Use EIN as SSN for business
-        phoneNumber: formData.shareholders[0]?.phoneNo || "",
-        email: formData.shareholders[0]?.email || "",
-        address: `${formData.street} ${formData.apt}, ${formData.city}`.trim(),
         street: formData.street,
         apt: formData.apt,
         city: formData.city,
         state: formData.state,
         zipCode: formData.zipCode,
         notes: formData.notes,
-        status: formData.status as "Active" | "Inactive",
-        clientType: "Business",
+        status: formData.status,
       };
     } else if (formData.clientType === "Entity") {
       newClient = {
         firstName: formData.entityName.split(" ")[0] || "Entity",
         lastName:
           formData.entityName.split(" ").slice(1).join(" ") || "Formation",
+        email: formData.entityEmailAddress || "entity@example.com",
+        password: formData.password,
+        phone: formData.entityPhoneNo || "",
+        clientType: "Entity",
+        ssn: formData.entityEin || formData.ownerSsn,
+        address: formData.entityAddress,
+        // Additional entity fields
         entityName: formData.entityName,
         publicationCountry: formData.publicationCountry,
         entityEin: formData.entityEin,
-        entityPhoneNo: formData.entityPhoneNo,
-        entityEmailAddress: formData.entityEmailAddress,
-        entityAddress: formData.entityAddress,
         ownerFirstName: formData.ownerFirstName,
         ownerMi: formData.ownerMi,
         ownerLastName: formData.ownerLastName,
@@ -319,24 +373,23 @@ export function CreateClientDialog({
         registeredAgentName: formData.registeredAgentName,
         registeredAgentAddress: formData.registeredAgentAddress,
         publicationDetails: formData.publicationDetails,
-        ssn: formData.entityEin || formData.ownerSsn, // Use Entity EIN or Owner SSN
-        phoneNumber: formData.entityPhoneNo,
-        email: formData.entityEmailAddress,
-        address: formData.entityAddress,
         notes: formData.notes,
-        status: formData.status as "Active" | "Inactive",
-        clientType: "Entity",
+        status: formData.status,
       };
     } else {
       newClient = {
         firstName: formData.firstName,
-        mi: formData.mi,
         lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phoneNo,
+        clientType: "Individual",
+        ssn: formData.ssn,
+        address: `${formData.street} ${formData.apt}, ${formData.city}`.trim(),
+        // Additional individual fields
+        mi: formData.mi,
         dateOfBirth: formData.dateOfBirth,
         profileImage: formData.profileImage,
-        spouse: formData.spouseFirstName
-          ? `${formData.spouseFirstName} ${formData.spouseLastName}`
-          : undefined,
         spouseFirstName: formData.spouseFirstName,
         spouseMi: formData.spouseMi,
         spouseLastName: formData.spouseLastName,
@@ -345,18 +398,13 @@ export function CreateClientDialog({
         spousePhoneNo: formData.spousePhoneNo,
         spouseEmail: formData.spouseEmail,
         dependents: formData.dependents,
-        ssn: formData.ssn,
-        phoneNumber: formData.phoneNo,
-        email: formData.email,
-        address: `${formData.street} ${formData.apt}, ${formData.city}`.trim(),
         street: formData.street,
         apt: formData.apt,
         city: formData.city,
         state: formData.state,
         zipCode: formData.zipCode,
         notes: formData.notes,
-        status: formData.status as "Active" | "Inactive",
-        clientType: "Individual",
+        status: formData.status,
       };
     }
 
@@ -468,12 +516,15 @@ export function CreateClientDialog({
 
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="businessName">Business Name</Label>
+          <Label htmlFor="businessName">
+            Business Name <span className="text-red-500">*</span>
+          </Label>
           <Input
             id="businessName"
             placeholder="Write Name"
             value={formData.businessName}
             onChange={(e) => updateFormData("businessName", e.target.value)}
+            required
           />
         </div>
         <div className="space-y-2">
@@ -558,6 +609,47 @@ export function CreateClientDialog({
           </SelectContent>
         </Select>
       </div>
+
+      {/* Login Credentials Section */}
+      <div className="border-t pt-4">
+        <h4 className="text-md font-semibold text-gray-900 mb-4">
+          Login Credentials
+        </h4>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="businessEmail">
+              Email <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="businessEmail"
+              type="email"
+              placeholder="Enter login email"
+              value={formData.shareholders[0]?.email || ""}
+              onChange={(e) => {
+                const newShareholders = [...formData.shareholders];
+                if (newShareholders[0]) {
+                  newShareholders[0].email = e.target.value;
+                  updateFormData("shareholders", newShareholders);
+                }
+              }}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="businessPassword">
+              Password <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="businessPassword"
+              type="password"
+              placeholder="Enter login password"
+              value={formData.password}
+              onChange={(e) => updateFormData("password", e.target.value)}
+              required
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 
@@ -582,13 +674,16 @@ export function CreateClientDialog({
 
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label>First Name</Label>
+              <Label>
+                First Name <span className="text-red-500">*</span>
+              </Label>
               <Input
                 placeholder="Write First Name"
                 value={shareholder.firstName}
                 onChange={(e) =>
                   updateShareholder(index, "firstName", e.target.value)
                 }
+                required
               />
             </div>
             <div className="space-y-2">
@@ -600,13 +695,16 @@ export function CreateClientDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>Last Name</Label>
+              <Label>
+                Last Name <span className="text-red-500">*</span>
+              </Label>
               <Input
                 placeholder="Write Last Name"
                 value={shareholder.lastName}
                 onChange={(e) =>
                   updateShareholder(index, "lastName", e.target.value)
                 }
+                required
               />
             </div>
           </div>
@@ -634,13 +732,16 @@ export function CreateClientDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>Phone no</Label>
+              <Label>
+                Phone no <span className="text-red-500">*</span>
+              </Label>
               <Input
                 placeholder="Write Phone no"
                 value={shareholder.phoneNo}
                 onChange={(e) =>
                   updateShareholder(index, "phoneNo", e.target.value)
                 }
+                required
               />
             </div>
           </div>
@@ -677,12 +778,15 @@ export function CreateClientDialog({
 
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="firstName">First Name</Label>
+          <Label htmlFor="firstName">
+            First Name <span className="text-red-500">*</span>
+          </Label>
           <Input
             id="firstName"
             placeholder="Write First Name"
             value={formData.firstName}
             onChange={(e) => updateFormData("firstName", e.target.value)}
+            required
           />
         </div>
         <div className="space-y-2">
@@ -695,12 +799,15 @@ export function CreateClientDialog({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="lastName">Last Name</Label>
+          <Label htmlFor="lastName">
+            Last Name <span className="text-red-500">*</span>
+          </Label>
           <Input
             id="lastName"
             placeholder="Write Last Name"
             value={formData.lastName}
             onChange={(e) => updateFormData("lastName", e.target.value)}
+            required
           />
         </div>
       </div>
@@ -726,41 +833,67 @@ export function CreateClientDialog({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="phoneNo">Phone no</Label>
+          <Label htmlFor="phoneNo">
+            Phone no <span className="text-red-500">*</span>
+          </Label>
           <Input
             id="phoneNo"
             placeholder="Write Phone no"
             value={formData.phoneNo}
             onChange={(e) => updateFormData("phoneNo", e.target.value)}
+            required
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="Write your Email"
-            value={formData.email}
-            onChange={(e) => updateFormData("email", e.target.value)}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="status">Status</Label>
-          <Select
-            value={formData.status}
-            onValueChange={(value) => updateFormData("status", value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Active">Active</SelectItem>
-              <SelectItem value="Inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
+      <div className="space-y-2">
+        <Label htmlFor="status">Status</Label>
+        <Select
+          value={formData.status}
+          onValueChange={(value) => updateFormData("status", value)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Active">Active</SelectItem>
+            <SelectItem value="Inactive">Inactive</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Login Credentials Section */}
+      <div className="border-t pt-4">
+        <h4 className="text-md font-semibold text-gray-900 mb-4">
+          Login Credentials
+        </h4>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">
+              Email <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="Enter login email"
+              value={formData.email}
+              onChange={(e) => updateFormData("email", e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">
+              Password <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Enter login password"
+              value={formData.password}
+              onChange={(e) => updateFormData("password", e.target.value)}
+              required
+            />
+          </div>
         </div>
       </div>
 
@@ -1098,12 +1231,15 @@ export function CreateClientDialog({
 
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="entityName">Entity Name</Label>
+          <Label htmlFor="entityName">
+            Entity Name <span className="text-red-500">*</span>
+          </Label>
           <Input
             id="entityName"
             placeholder="Write Entity Name"
             value={formData.entityName}
             onChange={(e) => updateFormData("entityName", e.target.value)}
+            required
           />
         </div>
         <div className="space-y-2">
@@ -1130,16 +1266,21 @@ export function CreateClientDialog({
 
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="entityPhoneNo">Phone no</Label>
+          <Label htmlFor="entityPhoneNo">
+            Phone no <span className="text-red-500">*</span>
+          </Label>
           <Input
             id="entityPhoneNo"
             placeholder="Write Phone No"
             value={formData.entityPhoneNo}
             onChange={(e) => updateFormData("entityPhoneNo", e.target.value)}
+            required
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="entityEmailAddress">Email Address</Label>
+          <Label htmlFor="entityEmailAddress">
+            Email Address <span className="text-red-500">*</span>
+          </Label>
           <Input
             id="entityEmailAddress"
             type="email"
@@ -1148,6 +1289,7 @@ export function CreateClientDialog({
             onChange={(e) =>
               updateFormData("entityEmailAddress", e.target.value)
             }
+            required
           />
         </div>
         <div className="space-y-2">
@@ -1176,6 +1318,43 @@ export function CreateClientDialog({
           </SelectContent>
         </Select>
       </div>
+
+      {/* Login Credentials Section */}
+      <div className="border-t pt-4">
+        <h4 className="text-md font-semibold text-gray-900 mb-4">
+          Login Credentials
+        </h4>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="entityLoginEmail">
+              Email <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="entityLoginEmail"
+              type="email"
+              placeholder="Enter login email"
+              value={formData.entityEmailAddress}
+              onChange={(e) =>
+                updateFormData("entityEmailAddress", e.target.value)
+              }
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="entityPassword">
+              Password <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="entityPassword"
+              type="password"
+              placeholder="Enter login password"
+              value={formData.password}
+              onChange={(e) => updateFormData("password", e.target.value)}
+              required
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 
@@ -1185,12 +1364,15 @@ export function CreateClientDialog({
 
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="ownerFirstName">First Name</Label>
+          <Label htmlFor="ownerFirstName">
+            First Name <span className="text-red-500">*</span>
+          </Label>
           <Input
             id="ownerFirstName"
             placeholder="Write First Name"
             value={formData.ownerFirstName}
             onChange={(e) => updateFormData("ownerFirstName", e.target.value)}
+            required
           />
         </div>
         <div className="space-y-2">
@@ -1203,12 +1385,15 @@ export function CreateClientDialog({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="ownerLastName">Last Name</Label>
+          <Label htmlFor="ownerLastName">
+            Last Name <span className="text-red-500">*</span>
+          </Label>
           <Input
             id="ownerLastName"
             placeholder="Write Last Name"
             value={formData.ownerLastName}
             onChange={(e) => updateFormData("ownerLastName", e.target.value)}
+            required
           />
         </div>
       </div>
@@ -1444,9 +1629,20 @@ export function CreateClientDialog({
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Required fields note */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-sm text-blue-800">
+              Fields marked with{" "}
+              <span className="text-red-500 font-semibold">*</span> are required
+              and must be filled out.
+            </p>
+          </div>
+
           {/* Client Class Selector */}
           <div className="space-y-2 w-full">
-            <Label htmlFor="clientClass">Client Class</Label>
+            <Label htmlFor="clientClass">
+              Client Class <span className="text-red-500">*</span>
+            </Label>
             <Select
               value={formData.clientType}
               onValueChange={handleClientTypeChange}

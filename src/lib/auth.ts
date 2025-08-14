@@ -17,7 +17,6 @@ export function generateJWT(user: AuthUser): string {
   return jwt.sign(
     {
       id: user.id,
-      email: user.email,
       role: user.role,
     },
     JWT_SECRET,
@@ -30,9 +29,6 @@ export function verifyJWT(token: string): AuthUser | null {
     const decoded = jwt.verify(token, JWT_SECRET) as any;
     return {
       id: decoded.id,
-      email: decoded.email,
-      firstName: decoded.firstName,
-      lastName: decoded.lastName,
       role: decoded.role,
     };
   } catch (error) {

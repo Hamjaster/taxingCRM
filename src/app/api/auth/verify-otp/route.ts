@@ -1,93 +1,82 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import User from '@/models/User';
+import Client from '@/models/Client';
+import { verifyOTP } from '@/lib/otp';
 import { generateJWT } from '@/lib/auth';
-import { OTPVerification } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    const body: { userId?: string; firebaseUid?: string; phone?: string } = await request.json();
-    const { userId, firebaseUid, phone } = body;
+    const body = await request.json();
+    const { email, otp } = body;
 
     // Validate required fields
-    if (!userId && !phone && !firebaseUid) {
+    if (!email || !otp) {
       return NextResponse.json(
-        { error: 'User ID, phone number, or Firebase UID is required' },
+        { error: 'Email and OTP are required' },
         { status: 400 }
       );
     }
 
-    // Find user by userId, phone, or create if Firebase verification is successful
-    let user;
-    if (userId) {
-      user = await User.findById(userId);
-    } else if (phone) {
-      user = await User.findOne({ phone });
+    // Verify OTP
+    const otpVerification = verifyOTP(email, otp);
+    
+    if (!otpVerification.isValid) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: otpVerification.message,
+          attemptsLeft: otpVerification.attemptsLeft 
+        },
+        { status: 400 }
+      );
     }
 
-    if (!user) {
+    // Find client by email
+    const client = await Client.findOne({ email: email.toLowerCase() });
+
+    if (!client) {
       return NextResponse.json(
-        { error: 'User not found' },
+        { success: false, message: 'Client not found' },
         { status: 404 }
       );
     }
 
-    // Check if user is active
-    if (!user.isActive) {
+    // Check if client is active
+    if (!client.isActive) {
       return NextResponse.json(
-        { error: 'Account is deactivated' },
+        { success: false, message: 'Account is deactivated. Please contact your administrator.' },
         { status: 401 }
       );
     }
 
-    // Since Firebase has already verified the phone number,
-    // we just need to mark the user as phone verified
-    user.isPhoneVerified = true;
-    user.lastLogin = new Date();
+    // Update last login and email verification status
+    client.lastLogin = new Date();
+    client.isEmailVerified = true;
+    await client.save();
 
-    // Store Firebase UID if provided for future reference
-    if (firebaseUid) {
-      user.firebaseUid = firebaseUid;
-    }
-
-    await user.save();
-
-    // Generate JWT token
+    // Generate JWT token for client
     const token = generateJWT({
-      id: user._id.toString(),
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
+      id: client._id.toString(),
+      role: "client",
     });
 
-    // Create response
+    // Remove sensitive information before sending response
+    const clientData = client.toObject();
+    delete clientData.password;
+
+    // Create response with client data
     const response = NextResponse.json({
-      message: 'Phone verified successfully',
-      user: {
-        id: user._id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        isPhoneVerified: user.isPhoneVerified,
-      },
-    });
-
-    // Set HTTP-only cookie
-    response.cookies.set('auth-token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      message: 'OTP verified successfully. Login completed.',
+      data: { ...clientData, token },
+      success: true,
     });
 
     return response;
 
   } catch (error) {
-    console.error('OTP verification error:', error);
+    console.error('Verify OTP error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

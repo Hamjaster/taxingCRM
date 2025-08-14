@@ -32,6 +32,8 @@ import {
 } from "../ui/dropdown-menu";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { useAppDispatch } from "@/hooks/redux";
+import { logoutUser, clearAuth } from "@/store/slices/authSlice";
 
 const menuItems = [
   {
@@ -64,10 +66,22 @@ const menuItems = [
 export function ClientSidebar() {
   const router = useRouter();
   const pathname = usePathname();
+  const dispatch = useAppDispatch();
 
-  const signOut = () => {
-    router.push("/");
-    // Implement sign out logic here
+  const signOut = async () => {
+    try {
+      // Call logout API and clear Redux state
+      await dispatch(logoutUser());
+      // Also clear auth state locally
+      dispatch(clearAuth());
+      // Redirect to home page
+      router.push("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if API call fails, clear local state and redirect
+      dispatch(clearAuth());
+      router.push("/");
+    }
   };
   return (
     <Sidebar collapsible="icon" className="border-r border-gray-200">

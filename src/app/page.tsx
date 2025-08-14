@@ -1,25 +1,25 @@
 import RegisterForm from "@/components/auth/RegisterForm";
 import AuthLayout from "@/components/auth/AuthLayout";
 
-export default function ClientRegisterPage() {
+export default function AdminRegisterPage() {
   return (
     <AuthLayout
-      title="Register as a Client"
+      title="Register as an Admin"
       subtitle=""
       footerLinks={[
         {
-          text: "Already have a client account?",
+          text: "Already have an admin account?",
           linkText: "Sign in here",
-          href: "/client/login",
+          href: "/admin/login",
         },
         {
-          text: "Are you an administrator?",
-          linkText: "Admin Registration",
-          href: "/admin/register",
+          text: "Are you a client?",
+          linkText: "Client Login",
+          href: "/client/login",
         },
       ]}
     >
-      <RegisterForm userType="client" />
+      <RegisterForm userType="admin" />
     </AuthLayout>
   );
 }

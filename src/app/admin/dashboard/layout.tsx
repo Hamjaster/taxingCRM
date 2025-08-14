@@ -1,13 +1,16 @@
 import { DashboardLayout } from "@/components/admin/dashboard-layout";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 interface AdminDashboardLayoutProps {
   children: React.ReactNode;
 }
 
-export default function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
+export default function AdminDashboardLayout({
+  children,
+}: AdminDashboardLayoutProps) {
   return (
-    <DashboardLayout>
-      {children}
-    </DashboardLayout>
+    <AuthGuard requiredRole="admin">
+      <DashboardLayout>{children}</DashboardLayout>
+    </AuthGuard>
   );
 }

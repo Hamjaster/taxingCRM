@@ -13,6 +13,103 @@ export interface User {
   updatedAt: Date;
 }
 
+export interface Admin {
+  _id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  isActive: boolean;
+  isEmailVerified: boolean;
+  isPhoneVerified: boolean;
+  lastLogin?: Date;
+  permissions?: string[];
+  department?: string;
+  employeeId?: string;
+  clients: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ClientUser {
+  _id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  isActive: boolean;
+  isEmailVerified: boolean;
+  isPhoneVerified: boolean;
+  lastLogin?: Date;
+  assignedAdminId: string;
+  clientType: "Individual" | "Business" | "Entity";
+  status: "Active" | "Inactive";
+  ssn?: string;
+  address?: string;
+  avatar?: string;
+  mi?: string;
+  dateOfBirth?: string;
+  profileImage?: string;
+  spouse?: string;
+  spouseFirstName?: string;
+  spouseMi?: string;
+  spouseLastName?: string;
+  spouseDateOfBirth?: string;
+  spouseSsn?: string;
+  spousePhoneNo?: string;
+  spouseEmail?: string;
+  dependents?: Array<{
+    firstName: string;
+    mi: string;
+    lastName: string;
+    dateOfBirth: string;
+    ssn: string;
+    phoneNo: string;
+    email: string;
+  }>;
+  businessName?: string;
+  ein?: string;
+  entityStructure?: string;
+  dateBusinessFormed?: string;
+  sElectionEffectiveDate?: string;
+  noOfShareholders?: string;
+  shareholders?: Array<{
+    ownership: string;
+    firstName: string;
+    mi: string;
+    lastName: string;
+    dateOfBirth: string;
+    ssn: string;
+    phoneNo: string;
+    email: string;
+  }>;
+  entityName?: string;
+  publicationCountry?: string;
+  entityEin?: string;
+  entityPhoneNo?: string;
+  entityEmailAddress?: string;
+  entityAddress?: string;
+  ownerFirstName?: string;
+  ownerMi?: string;
+  ownerLastName?: string;
+  ownerDateOfBirth?: string;
+  ownerSsn?: string;
+  servicesToProvide?: string[];
+  serviceOfProcessName?: string;
+  serviceOfProcessAddress?: string;
+  registeredAgentName?: string;
+  registeredAgentAddress?: string;
+  publicationDetails?: string;
+  street?: string;
+  apt?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface ServiceType {
   _id: string;
   name: string;
@@ -61,9 +158,6 @@ export interface Note {
 
 export interface AuthUser {
   id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
   role: 'admin' | 'client';
 }
 

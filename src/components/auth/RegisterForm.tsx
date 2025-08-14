@@ -16,14 +16,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { User, Mail, Phone, Lock, UserCheck, AlertCircle } from "lucide-react";
-import {
-  setupRecaptcha,
-  sendOTPWithFirebase,
-  verifyOTPWithFirebase,
-  clearConfirmationResult,
-} from "@/lib/firebase-auth";
-import type { RecaptchaVerifier } from "firebase/auth";
+
 import OTPForm from "./OtpForm";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+import { useAppDispatch, useAppSelector } from "@/hooks/redux";
+import { registerUser, clearError } from "@/store/slices/authSlice";
 
 interface RegisterFormProps {
   userType?: "admin" | "client";
@@ -39,28 +37,20 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
     phone: "",
     role: userType || "client",
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [showOTP, setShowOTP] = useState(false);
-  const [userId, setUserId] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [recaptchaVerifier, setRecaptchaVerifier] =
-    useState<RecaptchaVerifier | null>(null);
+  const [validationErrors, setValidationErrors] = useState<{
+    confirmPassword?: string;
+    password?: string;
+  }>({});
+
   const router = useRouter();
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const verifier = setupRecaptcha("recaptcha-container-register");
-      setRecaptchaVerifier(verifier);
-    }
+  const dispatch = useAppDispatch();
+  const { isLoading, error } = useAppSelector((state) => state.auth);
 
-    return () => {
-      clearConfirmationResult();
-      if (recaptchaVerifier) {
-        recaptchaVerifier.clear();
-      }
-    };
-  }, []);
+  useEffect(() => {
+    // Clear error when component mounts or user type changes
+    dispatch(clearError());
+  }, [dispatch, userType]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -68,133 +58,48 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
-    // For testing purposes
-    // if (userType === "admin") {
-    //   router.push("/admin/dashboard");
-    // } else {
-    //   router.push("/client/dashboard");
-    // }
+    dispatch(clearError());
+    setValidationErrors({});
 
-    // Working Code
+    // Client-side validation
+    const newValidationErrors: { confirmPassword?: string; password?: string } =
+      {};
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      setIsLoading(false);
-      return;
+      newValidationErrors.confirmPassword = "Passwords do not match";
     }
 
     if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long");
-      setIsLoading(false);
+      newValidationErrors.password =
+        "Password must be at least 8 characters long";
+    }
+
+    if (Object.keys(newValidationErrors).length > 0) {
+      setValidationErrors(newValidationErrors);
       return;
     }
 
-    try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          phone: formData.phone,
-          role: formData.role,
-        }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Registration failed");
-      }
-
-      setUserId(data.userId);
-      setPhoneNumber(data.phoneNumber);
-
-      if (data.needsVerification) {
-        setError(
-          "Account found but phone not verified. Sending verification code..."
-        );
-      }
-
-      if (recaptchaVerifier) {
-        const result = await sendOTPWithFirebase(
-          data.phoneNumber,
-          recaptchaVerifier
-        );
-        if (result.success) {
-          setShowOTP(true);
-          if (data.needsVerification) {
-            setError("");
-          }
-        } else {
-          throw new Error(result.error || "Failed to send OTP");
-        }
-      } else {
-        throw new Error("reCAPTCHA not initialized");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleOTPVerification = async (otpCode: string) => {
-    setIsLoading(true);
-    setError("");
-
-    try {
-      const firebaseResult = await verifyOTPWithFirebase(otpCode);
-      if (!firebaseResult.success) {
-        throw new Error(firebaseResult.error || "Firebase verification failed");
-      }
-
-      const response = await fetch("/api/auth/complete-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          firebaseUid: firebaseResult.firebaseUser?.uid,
-        }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Backend verification failed");
-      }
-
-      if (data.user.role === "admin") {
-        router.push("/admin/dashboard");
-      } else {
-        router.push("/client/dashboard");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (showOTP) {
-    return (
-      <OTPForm
-        phoneNumber={phoneNumber}
-        onVerify={handleOTPVerification}
-        onResend={() => {
-          fetch("/api/auth/resend-otp", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId }),
-          });
-        }}
-        isLoading={isLoading}
-        error={error}
-      />
+    const resultAction = await dispatch(
+      registerUser({
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        role: formData.role as "admin" | "client",
+      })
     );
-  }
+
+    if (registerUser.fulfilled.match(resultAction)) {
+      // Registration successful - redirect based on user type
+      if (formData.role === "admin") {
+        router.push("/admin/login");
+      } else {
+        router.push("/client/login");
+      }
+    }
+    // If registration fails, the error will be handled by Redux and displayed via the error state
+  };
 
   return (
     <Card className="w-full shadow-2xl border-0 bg-white/80 backdrop-blur-sm ">
@@ -281,7 +186,7 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
           </div>
 
           <div className="space-y-1">
-            <Label
+            {/* <Label
               htmlFor="phone"
               className="text-sm font-medium text-gray-700"
             >
@@ -299,7 +204,23 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
                 disabled={isLoading}
                 className="h-12 pl-10 border-gray-200 focus:border-primary-500 focus:ring-primary-500 transition-colors"
               />
-            </div>
+            </div> */}
+            <PhoneInput
+              country={"us"}
+              value={formData.phone}
+              inputStyle={{
+                width: "100%",
+                height: "45px",
+                border: "1px solid #e0e0e0",
+              }}
+              containerStyle={{
+                height: "45px",
+              }}
+              inputProps={{
+                placeholder: "Enter phone number",
+              }}
+              onChange={(phone) => handleInputChange("phone", phone)}
+            />{" "}
           </div>
 
           {!userType && (
@@ -342,9 +263,16 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
                 placeholder="Enter your password"
                 required
                 disabled={isLoading}
-                className="h-12 pl-10 border-gray-200 focus:border-primary-500 focus:ring-primary-500 transition-colors"
+                className={`h-12 pl-10 border-gray-200 focus:border-primary-500 focus:ring-primary-500 transition-colors ${
+                  validationErrors.password ? "border-red-500" : ""
+                }`}
               />
             </div>
+            {validationErrors.password && (
+              <p className="text-sm text-red-600">
+                {validationErrors.password}
+              </p>
+            )}
           </div>
 
           <div className="space-y-1">
@@ -366,9 +294,16 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
                 placeholder="Confirm your password"
                 required
                 disabled={isLoading}
-                className="h-12 pl-10 border-gray-200 focus:border-primary-500 focus:ring-primary-500 transition-colors"
+                className={`h-12 pl-10 border-gray-200 focus:border-primary-500 focus:ring-primary-500 transition-colors ${
+                  validationErrors.confirmPassword ? "border-red-500" : ""
+                }`}
               />
             </div>
+            {validationErrors.confirmPassword && (
+              <p className="text-sm text-red-600">
+                {validationErrors.confirmPassword}
+              </p>
+            )}
           </div>
 
           <Button

@@ -1,6 +1,8 @@
 import connectDB from './mongodb';
 import ServiceType from '@/models/ServiceType';
 import User from '@/models/User';
+import Admin from '@/models/Admin';
+import Client from '@/models/Client';
 import { hashPassword } from './auth';
 
 const defaultServiceTypes = [
@@ -104,10 +106,55 @@ export async function createDefaultAdmin() {
   }
 }
 
+export async function createTestClient() {
+  try {
+    await connectDB();
+
+    // Check if test client already exists
+    const existingClient = await Client.findOne({ email: 'testclient@example.com' });
+    if (existingClient) {
+      console.log('Test client already exists, skipping creation');
+      return;
+    }
+
+    // Find the default admin to assign the client to
+    const admin = await Admin.findOne({ email: 'admin@taxingcrm.com' });
+    if (!admin) {
+      console.log('Default admin not found, please run seed first');
+      return;
+    }
+
+    // Create test client
+    const hashedPassword = await hashPassword('client123');
+    
+    const client = new Client({
+      email: 'testclient@example.com',
+      password: hashedPassword,
+      firstName: 'Test',
+      lastName: 'Client',
+      phone: '+1234567890',
+      assignedAdminId: admin._id,
+      clientType: 'Individual',
+      isActive: true,
+      isEmailVerified: false,
+    });
+
+    await client.save();
+    console.log('Test client created successfully');
+    console.log('Email: testclient@example.com');
+    console.log('Password: client123');
+
+  } catch (error) {
+    console.error('Error creating test client:', error);
+    throw error;
+  }
+}
+
 export async function seedDatabase() {
   try {
     await seedServiceTypes();
     await createDefaultAdmin();
+    await createTestClient();
     console.log('Database seeded successfully');
   } catch (error) {
     console.error('Error seeding database:', error);

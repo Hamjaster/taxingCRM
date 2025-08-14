@@ -1,197 +1,166 @@
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Shield, RefreshCw } from "lucide-react";
+import { Shield, RefreshCw, Mail, Clock } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface OTPFormProps {
-  phoneNumber: string;
+  email: string;
   onVerify: (otpCode: string) => void;
   onResend: () => void;
   isLoading: boolean;
   error: string;
-}
-
-import type { ReactNode } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-
-interface AuthCardProps {
-  children: ReactNode;
-  className?: string;
-}
-
-function AuthCard({ children, className = "" }: AuthCardProps) {
-  return (
-    <Card
-      className={`w-full shadow-2xl border-0 bg-white/80 backdrop-blur-sm ${className}`}
-    >
-      <CardContent className="p-8">{children}</CardContent>
-    </Card>
-  );
-}
-
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-
-interface FormFieldProps {
-  label: string;
-  id: string;
-  type?: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  required?: boolean;
-  disabled?: boolean;
-  icon?: ReactNode;
-  className?: string;
-}
-
-function FormField({
-  label,
-  id,
-  type = "text",
-  value,
-  onChange,
-  placeholder,
-  required = false,
-  disabled = false,
-  icon,
-  className = "",
-}: FormFieldProps) {
-  return (
-    <div className={`space-y-2 ${className}`}>
-      <Label htmlFor={id} className="text-sm font-medium text-gray-700">
-        {label}
-      </Label>
-      <div className="relative">
-        {icon && (
-          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-            {icon}
-          </div>
-        )}
-        <Input
-          id={id}
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          required={required}
-          disabled={disabled}
-          className={`h-12 ${
-            icon ? "pl-10" : ""
-          } border-gray-200 focus:border-primary-500 focus:ring-primary-500 transition-colors`}
-        />
-      </div>
-    </div>
-  );
-}
-
-interface SubmitButtonProps {
-  children: ReactNode;
-  isLoading: boolean;
-  disabled?: boolean;
-  className?: string;
-  type?: "button" | "submit";
-  onClick?: () => void;
-}
-
-function SubmitButton({
-  children,
-  isLoading,
-  disabled = false,
-  className = "",
-  type = "submit",
-  onClick,
-}: SubmitButtonProps) {
-  return (
-    <Button
-      type={type}
-      onClick={onClick}
-      disabled={isLoading || disabled}
-      isLoading={isLoading}
-      className={`w-full h-12 font-medium ${className}`}
-    >
-      {children}
-    </Button>
-  );
-}
-
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-
-interface ErrorAlertProps {
-  message: string;
-}
-
-function ErrorAlert({ message }: ErrorAlertProps) {
-  if (!message) return null;
-
-  return (
-    <Alert variant="destructive" className="border-red-200 bg-red-50">
-      <AlertCircle className="h-4 w-4" />
-      <AlertDescription className="text-red-800">{message}</AlertDescription>
-    </Alert>
-  );
+  remainingTime?: number;
 }
 
 export default function OTPForm({
-  phoneNumber,
+  email,
   onVerify,
   onResend,
   isLoading,
   error,
+  remainingTime = 0,
 }: OTPFormProps) {
   const [otpCode, setOtpCode] = useState("");
+  const [timeLeft, setTimeLeft] = useState(remainingTime);
+  const [canResend, setCanResend] = useState(remainingTime <= 0);
+
+  useEffect(() => {
+    setTimeLeft(remainingTime);
+    setCanResend(remainingTime <= 0);
+  }, [remainingTime]);
+
+  useEffect(() => {
+    if (timeLeft > 0) {
+      const timer = setTimeout(() => {
+        setTimeLeft(timeLeft - 1);
+        if (timeLeft <= 1) {
+          setCanResend(true);
+        }
+      }, 60000); // Update every minute
+
+      return () => clearTimeout(timer);
+    }
+  }, [timeLeft]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onVerify(otpCode);
+    if (otpCode.length === 6) {
+      onVerify(otpCode);
+    }
+  };
+
+  const handleResend = () => {
+    setOtpCode("");
+    setCanResend(false);
+    onResend();
+  };
+
+  const handleOtpChange = (value: string) => {
+    // Only allow digits and limit to 6 characters
+    const numericValue = value.replace(/\D/g, '').slice(0, 6);
+    setOtpCode(numericValue);
+  };
+
+  const maskEmail = (email: string) => {
+    const [localPart, domain] = email.split('@');
+    const maskedLocal = localPart.length > 2 
+      ? `${localPart[0]}${'*'.repeat(localPart.length - 2)}${localPart[localPart.length - 1]}`
+      : localPart;
+    return `${maskedLocal}@${domain}`;
   };
 
   return (
-    <AuthCard>
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-gradient-to-r from-green-400 to-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Shield className="w-8 h-8 text-white" />
+    <Card className="w-full shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
+      <CardContent className="p-8">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Mail className="w-8 h-8 text-white" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">
+            Verify Your Email
+          </h3>
+          <p className="text-gray-600">
+            Enter the 6-digit code sent to{" "}
+            <span className="font-medium text-blue-600">{maskEmail(email)}</span>
+          </p>
+          {timeLeft > 0 && (
+            <div className="flex items-center justify-center mt-3 text-sm text-gray-500">
+              <Clock className="w-4 h-4 mr-1" />
+              Code expires in {timeLeft} minute{timeLeft !== 1 ? 's' : ''}
+            </div>
+          )}
         </div>
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">
-          Verify Your Phone
-        </h3>
-        <p className="text-gray-600">
-          Enter the 6-digit code sent to{" "}
-          <span className="font-medium text-primary-600">{phoneNumber}</span>
-        </p>
-      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <ErrorAlert message={error} />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <Alert variant="destructive" className="border-red-200 bg-red-50">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-red-800">
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
 
-        <FormField
-          label="Verification Code"
-          id="otp"
-          type="text"
-          value={otpCode}
-          onChange={setOtpCode}
-          placeholder="Enter 6-digit code"
-          required
-          disabled={isLoading}
-          className="text-center"
-        />
+          <div className="space-y-2">
+            <Label htmlFor="otp" className="text-sm font-medium text-gray-700">
+              Verification Code
+            </Label>
+            <Input
+              id="otp"
+              type="text"
+              value={otpCode}
+              onChange={(e) => handleOtpChange(e.target.value)}
+              placeholder="000000"
+              required
+              disabled={isLoading}
+              className="h-12 text-center text-2xl font-mono tracking-widest border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+              maxLength={6}
+            />
+            <p className="text-xs text-gray-500 text-center">
+              Enter the 6-digit code from your email
+            </p>
+          </div>
 
-        <SubmitButton isLoading={isLoading} disabled={otpCode.length !== 6}>
-          Verify Code
-        </SubmitButton>
+          <Button
+            type="submit"
+            disabled={isLoading || otpCode.length !== 6}
+            isLoading={isLoading}
+            className="w-full h-12 font-medium"
+          >
+            {isLoading ? "Verifying..." : "Verify Code"}
+          </Button>
 
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full h-12 border-gray-200 hover:bg-gray-50 transition-colors bg-transparent"
-          onClick={onResend}
-          disabled={isLoading}
-        >
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Resend Code
-        </Button>
-      </form>
-    </AuthCard>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full h-12 border-gray-200 hover:bg-gray-50 transition-colors bg-transparent"
+            onClick={handleResend}
+            disabled={isLoading || !canResend}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            {canResend ? "Resend Code" : `Resend in ${timeLeft}m`}
+          </Button>
+
+          <div className="text-center">
+            <p className="text-sm text-gray-500">
+              Didn't receive the code? Check your spam folder or{" "}
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={!canResend}
+                className="text-blue-600 hover:text-blue-700 underline disabled:text-gray-400 disabled:no-underline"
+              >
+                try again
+              </button>
+            </p>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
