@@ -6,9 +6,5 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  return (
-    <AuthGuard requiredRole="client">
-      <ClientDashboardLayout>{children}</ClientDashboardLayout>
-    </AuthGuard>
-  );
+  return <ClientDashboardLayout>{children}</ClientDashboardLayout>;
 }

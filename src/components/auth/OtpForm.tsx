@@ -62,15 +62,18 @@ export default function OTPForm({
 
   const handleOtpChange = (value: string) => {
     // Only allow digits and limit to 6 characters
-    const numericValue = value.replace(/\D/g, '').slice(0, 6);
+    const numericValue = value.replace(/\D/g, "").slice(0, 6);
     setOtpCode(numericValue);
   };
 
   const maskEmail = (email: string) => {
-    const [localPart, domain] = email.split('@');
-    const maskedLocal = localPart.length > 2 
-      ? `${localPart[0]}${'*'.repeat(localPart.length - 2)}${localPart[localPart.length - 1]}`
-      : localPart;
+    const [localPart, domain] = email.split("@");
+    const maskedLocal =
+      localPart.length > 2
+        ? `${localPart[0]}${"*".repeat(localPart.length - 2)}${
+            localPart[localPart.length - 1]
+          }`
+        : localPart;
     return `${maskedLocal}@${domain}`;
   };
 
@@ -84,14 +87,16 @@ export default function OTPForm({
           <h3 className="text-2xl font-bold text-gray-900 mb-2">
             Verify Your Email
           </h3>
-          <p className="text-gray-600">
+          <p className="text-gray-600 mt-3">
             Enter the 6-digit code sent to{" "}
-            <span className="font-medium text-blue-600">{maskEmail(email)}</span>
+            <span className="font-medium text-blue-600">
+              {maskEmail(email)}
+            </span>
           </p>
           {timeLeft > 0 && (
             <div className="flex items-center justify-center mt-3 text-sm text-gray-500">
               <Clock className="w-4 h-4 mr-1" />
-              Code expires in {timeLeft} minute{timeLeft !== 1 ? 's' : ''}
+              Code expires in {timeLeft} minute{timeLeft !== 1 ? "s" : ""}
             </div>
           )}
         </div>
@@ -121,7 +126,7 @@ export default function OTPForm({
               className="h-12 text-center text-2xl font-mono tracking-widest border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-colors"
               maxLength={6}
             />
-            <p className="text-xs text-gray-500 text-center">
+            <p className="text-xs text-gray-500 text-center mt-3">
               Enter the 6-digit code from your email
             </p>
           </div>
@@ -147,7 +152,7 @@ export default function OTPForm({
           </Button>
 
           <div className="text-center">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 mt-3">
               Didn't receive the code? Check your spam folder or{" "}
               <button
                 type="button"

@@ -3,78 +3,57 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppSelector, useAppDispatch } from "@/hooks/redux";
-import { setUser } from "@/store/slices/authSlice";
+import { checkAuthStatus } from "@/store/slices/authSlice";
 
 interface AuthGuardProps {
   children: React.ReactNode;
-  requiredRole?: "admin" | "client";
 }
 
-export default function AuthGuard({ children, requiredRole }: AuthGuardProps) {
+export default function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { isAuthenticated, user, role, isLoading } = useAppSelector(
+  const { isAuthenticated, user, role, isLoading, error } = useAppSelector(
     (state) => state.auth
   );
 
   useEffect(() => {
-    // Check if user is logged in by checking for auth token
-    const checkAuth = async () => {
-      try {
-        const response = await fetch("/api/auth/me", {
-          credentials: "include",
-        });
-
-        if (response.ok) {
-          const userData = await response.json();
-          dispatch(
-            setUser({
-              user: userData.user,
-              role:
-                userData.user.role ||
-                (userData.user.assignedAdminId ? "client" : "admin"),
-            })
-          );
-        } else {
-          // Not authenticated, redirect to appropriate login page
-          if (requiredRole) {
-            router.push(`/${requiredRole}/login`);
-          } else {
-            router.push("/");
-          }
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error);
-        if (requiredRole) {
-          router.push(`/${requiredRole}/login`);
-        } else {
-          router.push("/");
-        }
-      }
-    };
-
+    // Check authentication status using Redux thunk
     if (!isAuthenticated && !isLoading) {
-      checkAuth();
+      console.log("Checking auth status...");
+      dispatch(checkAuthStatus());
     }
-  }, [isAuthenticated, isLoading, dispatch, router, requiredRole]);
+  }, [isAuthenticated, isLoading, dispatch]);
 
   useEffect(() => {
-    // Role-based access control
-    if (isAuthenticated && requiredRole && role !== requiredRole) {
-      // Redirect to appropriate dashboard if user has wrong role
+    // Handle authentication success - redirect to appropriate portal
+    if (isAuthenticated && role) {
+      console.log(`User authenticated as ${role}, redirecting...`);
       if (role === "admin") {
         router.push("/admin/dashboard");
       } else if (role === "client") {
         router.push("/client/dashboard");
       }
     }
-  }, [isAuthenticated, role, requiredRole, router]);
+  }, [isAuthenticated, role, router]);
+
+  useEffect(() => {
+    // Handle authentication failure - redirect to login
+    if (error && !isAuthenticated && !isLoading) {
+      console.log("Authentication failed, redirecting to login...");
+      router.push("/client/login");
+    }
+  }, [error, isAuthenticated, isLoading, router]);
 
   // If authenticated and role matches (or no role required), show children
-  if (isAuthenticated && (!requiredRole || role === requiredRole)) {
+  if (isAuthenticated) {
     return <>{children}</>;
   }
 
-  // Default loading state
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  // Default loading state for unauthenticated users (while redirect is happening)
   return <div></div>;
 }

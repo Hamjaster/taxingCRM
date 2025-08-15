@@ -59,6 +59,7 @@ export default function LoginForm({ userType }: LoginFormProps) {
       const result = await dispatch(
         loginUser({ email, password, userType }) as any
       );
+      console.log(result, "result after LOGIN");
 
       if (loginUser.fulfilled.match(result)) {
         // Check if OTP is required (for client login)

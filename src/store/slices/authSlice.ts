@@ -10,6 +10,13 @@ export interface AuthState {
   isLoading: boolean;
   error: string | null;
   clients: ClientUser[]; // For admin users to store their clients
+  otp: {
+    email: string | null;
+    isRequired: boolean;
+    isVerified: boolean;
+    remainingTime: number | null;
+    attemptsLeft: number | null;
+  };
 }
 
 // Initial state
@@ -21,6 +28,13 @@ const initialState: AuthState = {
   isLoading: false,
   error: null,
   clients: [],
+  otp: {
+    email: null,
+    isRequired: false,
+    isVerified: false,
+    remainingTime: null,
+    attemptsLeft: null,
+  },
 };
 
 // Async thunk for login
@@ -28,7 +42,6 @@ export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (credentials: { email: string; password: string; userType?: 'admin' | 'client' }, { rejectWithValue }) => {
     try {
-      // Determine the correct API endpoint based on user type
       const endpoint = credentials.userType === 'client' ? '/api/client/login' : '/api/admin/login';
       
       const response = await fetch(endpoint, {
@@ -43,6 +56,16 @@ export const loginUser = createAsyncThunk(
 
       if (!response.ok) {
         return rejectWithValue(data.message || data.error || 'Login failed');
+      }
+
+      // Handle OTP requirement for client login
+      if (data.requiresOTP) {
+        return {
+          requiresOTP: true,
+          email: data.email,
+          remainingTime: data.remainingTime,
+          message: data.message,
+        };
       }
 
       return data;
@@ -225,6 +248,47 @@ export const verifyOTP = createAsyncThunk(
   }
 );
 
+// Async thunk for checking authentication status
+export const checkAuthStatus = createAsyncThunk(
+  'auth/checkAuthStatus',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        return rejectWithValue('No token found');
+      }
+
+      const response = await fetch('/api/auth/me', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        // Clear invalid token
+        localStorage.removeItem('token');
+        return rejectWithValue('Authentication failed');
+      }
+
+      const userData = await response.json();
+      
+      // Determine user role from API response
+      const userRole = userData.user.role || (userData.user.assignedAdminId ? 'client' : 'admin');
+      
+      return {
+        user: userData.user,
+        role: userRole,
+        token: userData.token || token,
+      };
+    } catch (error) {
+      // Clear token on error
+      localStorage.removeItem('token');
+      return rejectWithValue('Network error occurred');
+    }
+  }
+);
+
 // Async thunk for logout
 export const logoutUser = createAsyncThunk(
   'auth/logoutUser',
@@ -299,6 +363,20 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.isLoading = false;
+        
+        // Handle OTP requirement case
+        if (action.payload.requiresOTP) {
+          state.otp = {
+            email: action.payload.email,
+            isRequired: true,
+            isVerified: false,
+            remainingTime: action.payload.remainingTime,
+            attemptsLeft: null,
+          };
+          return;
+        }
+
+        // Handle normal login success case
         state.user = action.payload.data;
         state.role = action.payload.data.role || (action.payload.data.assignedAdminId ? 'client' : 'admin');
         state.isAuthenticated = true;
@@ -408,10 +486,34 @@ const authSlice = createSlice({
         state.role = 'client';
         state.isAuthenticated = true;
         state.error = null;
+        localStorage.setItem('token', action.payload.data.token);
       })
       .addCase(verifyOTP.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
+      })
+      // Check auth status cases
+      .addCase(checkAuthStatus.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(checkAuthStatus.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.user;
+        state.role = action.payload.role;
+        state.isAuthenticated = true;
+        state.error = null;
+        // Update token if provided
+        if (action.payload.token) {
+          localStorage.setItem('token', action.payload.token);
+        }
+      })
+      .addCase(checkAuthStatus.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+        state.isAuthenticated = false;
+        state.user = null;
+        state.role = null;
       });
   },
 });

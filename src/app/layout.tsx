@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import ReduxProvider from "@/components/providers/ReduxProvider";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -23,7 +24,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} font-inter antialiased`}>
-        <ReduxProvider>{children}</ReduxProvider>
+        <ReduxProvider>
+          {/* <AuthGuard> */}
+          {children}
+          {/* </AuthGuard> */}
+        </ReduxProvider>
       </body>
     </html>
   );

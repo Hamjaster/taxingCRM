@@ -8,8 +8,8 @@ export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
-    // Get token from cookie
-    const token = request.cookies.get('auth-token')?.value;
+    // Get token from bearer token in headers
+    const token = request.headers.get('Authorization')?.split(' ')[1];
 
     if (!token) {
       return NextResponse.json(
@@ -51,30 +51,30 @@ export async function GET(request: NextRequest) {
     }
 
     // Return user data
-    const userData = {
-      id: user._id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: userRole,
-      isPhoneVerified: user.isPhoneVerified,
-      isEmailVerified: user.isEmailVerified,
-      lastLogin: user.lastLogin,
-      // Include role-specific data
-      ...(userRole === 'admin' && { 
-        clients: (user as any).clients || [],
-        permissions: (user as any).permissions || [],
-        department: (user as any).department,
-        employeeId: (user as any).employeeId,
-      }),
-      ...(userRole === 'client' && { 
-        assignedAdminId: (user as any).assignedAdminId,
-        clientType: (user as any).clientType,
-        status: (user as any).status,
-      }),
-    };
+    // const userData = {
+    //   id: user._id,
+    //   email: user.email,
+    //   firstName: user.firstName,
+    //   lastName: user.lastName,
+    //   role: userRole,
+    //   isPhoneVerified: user.isPhoneVerified,
+    //   isEmailVerified: user.isEmailVerified,
+    //   lastLogin: user.lastLogin,
+    //   // Include role-specific data
+    //   ...(userRole === 'admin' && { 
+    //     clients: (user as any).clients || [],
+    //     permissions: (user as any).permissions || [],
+    //     department: (user as any).department,
+    //     employeeId: (user as any).employeeId,
+    //   }),
+    //   ...(userRole === 'client' && { 
+    //     assignedAdminId: (user as any).assignedAdminId,
+    //     clientType: (user as any).clientType,
+    //     status: (user as any).status,
+    //   }),
+    // };
 
-    return NextResponse.json({ user: userData });
+    return NextResponse.json({ user, token });
 
   } catch (error) {
     console.error('Auth check error:', error);
