@@ -37,8 +37,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if there's already an active OTP
-    if (hasActiveOTP(email)) {
-      const remainingTime = getOTPRemainingTime(email);
+    if (await hasActiveOTP(email)) {
+      const remainingTime = await getOTPRemainingTime(email);
       return NextResponse.json(
         { 
           success: false, 
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     // Generate and store OTP
     const otp = generateOTP();
-    storeOTP(email, otp, 10); // 10 minutes expiry
+    await storeOTP(email, otp, 10); // 10 minutes expiry
 
     // Prepare email content
     const emailHTML = generateOTPEmailHTML(otp, client.firstName);
