@@ -7,12 +7,11 @@ export interface IClient extends Document {
   firstName: string;
   lastName: string;
   phone: string;
-  isActive: boolean;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   firebaseUid?: string;
   lastLogin?: Date;
-  assignedAdminId: string; // Reference to assigned admin
+  assignedAdminId: mongoose.Types.ObjectId; // Reference to assigned admin
   
   // Client specific fields
   clientType: "Individual" | "Business" | "Entity";
@@ -130,10 +129,7 @@ const ClientSchema = new Schema<IClient>({
     type: String,
     required: true,
   },
-  isActive: {
-    type: Boolean,
-    default: true,
-  },
+
   isEmailVerified: {
     type: Boolean,
     default: false,
@@ -150,7 +146,7 @@ const ClientSchema = new Schema<IClient>({
     type: Date,
   },
   assignedAdminId: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Admin',
     required: true,
   },

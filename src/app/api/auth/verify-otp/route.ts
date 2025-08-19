@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if client is active
-    if (!client.isActive) {
+    if (client.status !== 'Active') {
       return NextResponse.json(
         { success: false, message: 'Account is deactivated. Please contact your administrator.' },
         { status: 401 }

@@ -16,7 +16,7 @@ export async function GET(
     const client = await Client.findOne({
       _id: clientId,
       assignedAdminId: adminUser.id,
-      isActive: true
+      status: 'Active'
     });
 
     if (!client) {
@@ -65,7 +65,7 @@ export async function PUT(
       {
         _id: clientId,
         assignedAdminId: adminUser.id,
-        isActive: true
+        status: 'Active'
       },
       { $set: updates },
       { new: true, runValidators: true }
@@ -116,7 +116,7 @@ export async function DELETE(
         _id: clientId,
         assignedAdminId: adminUser.id,
       },
-      { $set: { isActive: false } },
+      { $set: { status: 'Inactive' } },
       { new: true }
     );
 

@@ -172,7 +172,7 @@ export const createClient = createAsyncThunk(
 // Async thunk for updating client status (activate/deactivate)
 export const updateClientStatus = createAsyncThunk(
   'auth/updateClientStatus',
-  async ({ clientId, isActive }: { clientId: string; isActive: boolean }, { rejectWithValue }) => {
+  async ({ clientId, status }: { clientId: string; status: 'Active' | 'Inactive' }, { rejectWithValue }) => {
     try {
       const response = await fetch(`/api/admin/clients/${clientId}`, {
         method: 'PUT',
@@ -180,7 +180,7 @@ export const updateClientStatus = createAsyncThunk(
           'Content-Type': 'application/json'  ,
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify({ isActive }),
+        body: JSON.stringify({ status }),
       });
 
       const data = await response.json();
@@ -189,7 +189,7 @@ export const updateClientStatus = createAsyncThunk(
         return rejectWithValue(data.message || data.error || 'Failed to update client status');
       }
 
-      return { clientId, isActive };
+      return { clientId, status };
     } catch (error) {
       return rejectWithValue('Network error occurred');
     }
@@ -451,10 +451,10 @@ const authSlice = createSlice({
       })
       .addCase(updateClientStatus.fulfilled, (state, action) => {
         state.isLoading = false;
-        const { clientId, isActive } = action.payload;
+        const { clientId, status } = action.payload;
         const clientIndex = state.clients.findIndex(client => client._id === clientId);
         if (clientIndex !== -1) {
-          state.clients[clientIndex].isActive = isActive;
+          state.clients[clientIndex].status = status;
         }
         state.error = null;
       })

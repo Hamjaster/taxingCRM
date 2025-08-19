@@ -37,7 +37,6 @@ export interface ClientUser {
   firstName: string;
   lastName: string;
   phone: string;
-  isActive: boolean;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   lastLogin?: Date;

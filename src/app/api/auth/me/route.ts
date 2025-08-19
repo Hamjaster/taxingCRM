@@ -43,7 +43,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!user.isActive) {
+    // Check if user is active (different field for admin vs client)
+    const isUserActive = admin ? user.isActive : (user as any).status === 'Active';
+    if (!isUserActive) {
       return NextResponse.json(
         { error: 'Account is deactivated' },
         { status: 401 }

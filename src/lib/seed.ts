@@ -135,7 +135,7 @@ export async function createTestClient() {
       phone: '+1234567890',
       assignedAdminId: admin._id,
       clientType: 'Individual',
-      isActive: true,
+      status: 'Active',
       isEmailVerified: false,
     });
 

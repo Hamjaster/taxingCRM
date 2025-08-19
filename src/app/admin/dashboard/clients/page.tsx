@@ -106,10 +106,11 @@ export default function ClientListPage() {
 
   const handleToggleClientStatus = async (
     clientId: string,
-    currentStatus: boolean
+    currentStatus: "Active" | "Inactive"
   ) => {
+    const newStatus = currentStatus === "Active" ? "Inactive" : "Active";
     const resultAction = await dispatch(
-      updateClientStatus({ clientId, isActive: !currentStatus })
+      updateClientStatus({ clientId, status: newStatus })
     );
     if (updateClientStatus.fulfilled.match(resultAction)) {
       console.log("Client status updated successfully");
@@ -171,9 +172,9 @@ export default function ClientListPage() {
       render: (value) => <span className="text-gray-600">{value}</span>,
     },
     {
-      key: "isActive",
+      key: "status",
       title: "Status",
-      render: (value) => <StatusBadge status={value} />,
+      render: (value) => <StatusBadge status={value === "Active"} />,
     },
     {
       key: "action",
@@ -187,11 +188,17 @@ export default function ClientListPage() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem
-              onClick={() => handleToggleClientStatus(row._id, row.isActive)}
+              onClick={() => handleToggleClientStatus(row._id, row.status)}
             >
-              {row.isActive ? "Deactivate" : "Activate"} Client
+              {row.status === "Active" ? "Deactivate" : "Activate"} Client
             </DropdownMenuItem>
-            <DropdownMenuItem>View Details</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() =>
+                (window.location.href = `/admin/dashboard/clients/${row._id}`)
+              }
+            >
+              View Details
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ),

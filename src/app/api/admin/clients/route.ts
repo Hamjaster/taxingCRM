@@ -12,9 +12,8 @@ export async function GET(request: NextRequest) {
 
     const clients = await Client.find({ 
       assignedAdminId: adminUser.id,
-      isActive: true 
     })
-    .select('firstName lastName email phone isEmailVerified isPhoneVerified lastLogin createdAt clientType status assignedAdminId')
+    .select('firstName lastName email phone isEmailVerified isPhoneVerified status lastLogin createdAt clientType assignedAdminId')
     .sort({ createdAt: -1 });
 
     return NextResponse.json({ data: clients, success: true });
@@ -43,21 +42,9 @@ export async function POST(request: NextRequest) {
     const adminUser = requireAdmin(request);
 
     const body = await request.json();
-    const { 
-      email, 
-      password, 
-      firstName, 
-      lastName, 
-      phone, 
-      clientType = 'Individual',
-      ssn,
-      address,
-      businessName,
-      ein
-    } = body;
 
     // Validate required fields
-    if (!email || !password || !firstName || !lastName || !phone) {
+    if (!body.email || !body.password || !body.firstName || !body.lastName || !body.phone) {
       return NextResponse.json(
         { success: false, message: 'All required fields must be provided' },
         { status: 400 }
@@ -66,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     // Check if client already exists
     const existingClient = await Client.findOne({
-      $or: [{ email }, { phone }]
+      $or: [{ email: body.email }, { phone: body.phone }]
     });
 
     if (existingClient) {
@@ -78,22 +65,13 @@ export async function POST(request: NextRequest) {
 
     // Hash password
     const bcrypt = require('bcryptjs');
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(body.password, 12);
 
     // Create new client
     const client = new Client({
-      email: email.toLowerCase(),
+      ...body,
       password: hashedPassword,
-      firstName,
-      lastName,
-      phone,
       assignedAdminId: adminUser.id,
-      clientType,
-      status: 'Active',
-      ssn,
-      address,
-      businessName,
-      ein,
       isPhoneVerified: false, // Will need verification
     });
 
