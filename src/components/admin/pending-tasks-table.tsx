@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "@/hooks/redux";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -9,148 +10,117 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { AddTaskDialog } from "./add-task-dialog";
 import { ViewNotesDialog } from "./view-notes-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  fetchTasks,
+  updateTask,
+  deleteTask,
+  setFilters,
+  clearError,
+  Task,
+} from "@/store/slices/taskSlice";
 
-interface Task {
-  id: string;
-  clientClass: "Individual" | "Business";
-  clientName: string;
-  task: string;
-  date: string;
-  priceQuoted: number;
-  amountPaid: number;
-  remainingBalance: number;
-  status: "Completed" | "Do not continue" | "Pending";
-  notes: string;
-}
-
-// Mock data
-const mockTasks: Task[] = [
-  {
-    id: "1",
-    clientClass: "Individual",
-    clientName: "Ali",
-    task: "Individual Tax Prep",
-    date: "04/15/2025",
-    priceQuoted: 125.0,
-    amountPaid: 125.0,
-    remainingBalance: 0.0,
-    status: "Completed",
-    notes: "Tax return completed successfully. All documents filed.",
-  },
-  {
-    id: "2",
-    clientClass: "Business",
-    clientName: "John",
-    task: "Individual Tax Prep",
-    date: "04/15/2025",
-    priceQuoted: 175.0,
-    amountPaid: 175.0,
-    remainingBalance: 0.0,
-    status: "Do not continue",
-    notes: "Client requested to discontinue service.",
-  },
-  {
-    id: "3",
-    clientClass: "Individual",
-    clientName: "Sunny",
-    task: "Individual Tax Prep",
-    date: "04/15/2025",
-    priceQuoted: 125.0,
-    amountPaid: 125.0,
-    remainingBalance: 0.0,
-    status: "Completed",
-    notes: "Standard individual tax preparation completed.",
-  },
-  {
-    id: "4",
-    clientClass: "Business",
-    clientName: "Sam",
-    task: "Individual Tax Prep",
-    date: "04/15/2025",
-    priceQuoted: 125.0,
-    amountPaid: 125.0,
-    remainingBalance: 0.0,
-    status: "Completed",
-    notes: "Business tax filing completed on time.",
-  },
-  {
-    id: "5",
-    clientClass: "Individual",
-    clientName: "Johny",
-    task: "Individual Tax Prep",
-    date: "04/15/2025",
-    priceQuoted: 125.0,
-    amountPaid: 125.0,
-    remainingBalance: 0.0,
-    status: "Do not continue",
-    notes: "Client moved to different state.",
-  },
-  // Add more mock data for pagination
-  ...Array.from({ length: 50 }, (_, i) => ({
-    id: `${i + 6}`,
-    clientClass: (i % 2 === 0 ? "Individual" : "Business") as
-      | "Individual"
-      | "Business",
-    clientName: `Client ${i + 6}`,
-    task: "Individual Tax Prep",
-    date: "04/15/2025",
-    priceQuoted: 125.0,
-    amountPaid: 125.0,
-    remainingBalance: i % 3 === 0 ? 25.0 : 0.0,
-    status: ["Completed", "Do not continue", "Pending"][i % 3] as
-      | "Completed"
-      | "Do not continue"
-      | "Pending",
-    notes: `Sample notes for client ${
-      i + 6
-    }. Task details and progress information.`,
-  })),
-];
-
-export function PendingTasksTable() {
+export function PendingTasksTable({
+  tasks,
+  title,
+  description,
+}: {
+  tasks: Task[];
+  title: string;
+  description: string;
+}) {
+  const { error, isUpdating, isDeleting, filters } = useAppSelector(
+    (state) => state.tasks
+  );
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [isViewNotesOpen, setIsViewNotesOpen] = useState(false);
-  const [selectedYear, setSelectedYear] = useState("2023");
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const dispatch = useAppDispatch();
+  // Fetch tasks when component mounts or filters change
 
   const handleViewNotes = (task: Task) => {
     setSelectedTask(task);
     setIsViewNotesOpen(true);
   };
 
+  const handleStatusChange = async (taskId: string, newStatus: string) => {
+    await dispatch(
+      updateTask({
+        taskId,
+        updates: { status: newStatus },
+      })
+    );
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (window.confirm("Are you sure you want to delete this task?")) {
+      await dispatch(deleteTask(taskId));
+    }
+  };
+
+  const handleFilterChange = (key: string, value: string) => {
+    dispatch(setFilters({ ...filters, [key]: value, page: 1 }));
+  };
+
+  const handlePageChange = (page: number) => {
+    dispatch(setFilters({ ...filters, page }));
+  };
+
+  // Format client name for display
+  const getClientDisplayName = (client: Task["clientId"]) => {
+    return (
+      client.businessName ||
+      client.entityName ||
+      `${client.firstName} ${client.lastName}`
+    );
+  };
+
   const columns: Column<Task>[] = [
     {
-      key: "clientClass",
-      title: "Client Class",
+      key: "clientId",
+      title: "Client",
       sortable: true,
-      render: (value) => (
-        <span className="font-medium text-gray-900">{value}</span>
+      render: (_, row) => (
+        <div className="flex flex-col">
+          <span className="font-medium text-gray-900">
+            {getClientDisplayName(row.clientId)}
+          </span>
+          <span className="text-xs text-gray-500">
+            {row.clientId.clientType}
+          </span>
+        </div>
       ),
     },
     {
-      key: "clientName",
-      title: "Name of Client",
-      sortable: true,
-      render: (value) => (
-        <span className="font-medium text-gray-900">{value}</span>
-      ),
-    },
-    {
-      key: "task",
+      key: "title",
       title: "Task",
       sortable: true,
-      render: (value) => <span className="text-gray-600">{value}</span>,
+      render: (value, row) => (
+        <div className="flex flex-col">
+          <span className="font-medium text-gray-900">{value}</span>
+          <span className="text-xs text-gray-500">{row.category}</span>
+        </div>
+      ),
     },
     {
-      key: "date",
-      title: "Date",
-      render: (value) => <span className="text-gray-600">{value}</span>,
+      key: "dueDate",
+      title: "Due Date",
+      render: (value) => (
+        <span className="text-gray-600">
+          {value ? new Date(value).toLocaleDateString() : "-"}
+        </span>
+      ),
     },
     {
       key: "priceQuoted",
@@ -170,7 +140,13 @@ export function PendingTasksTable() {
       key: "remainingBalance",
       title: "Remaining Balance",
       render: (value) => (
-        <span className="text-gray-600">${value.toFixed(2)}</span>
+        <span
+          className={`font-medium ${
+            value > 0 ? "text-red-600" : "text-green-600"
+          }`}
+        >
+          ${value.toFixed(2)}
+        </span>
       ),
     },
     {
@@ -179,30 +155,80 @@ export function PendingTasksTable() {
       render: (value) => <StatusBadge status={value} />,
     },
     {
-      key: "notes",
-      title: "Quick Notes",
-      render: (_, row) => (
-        <Button
-          variant="link"
-          className="p-0 h-auto text-blue-600 hover:text-blue-800 font-medium"
-          onClick={() => handleViewNotes(row)}
+      key: "priority",
+      title: "Priority",
+      render: (value) => (
+        <span
+          className={`px-2 py-1 text-xs font-medium rounded-full ${
+            value === "Urgent"
+              ? "bg-red-100 text-red-800"
+              : value === "High"
+              ? "bg-orange-100 text-orange-800"
+              : value === "Medium"
+              ? "bg-yellow-100 text-yellow-800"
+              : "bg-gray-100 text-gray-800"
+          }`}
         >
-          View
-        </Button>
+          {value}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      title: "Actions",
+      render: (_, row) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <Eye className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => handleViewNotes(row)}>
+              <Eye className="h-4 w-4 mr-2" />
+              View Notes
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() =>
+                handleStatusChange(
+                  row._id,
+                  row.status === "Completed" ? "Pending" : "Completed"
+                )
+              }
+              disabled={isUpdating}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              {row.status === "Completed" ? "Mark Pending" : "Mark Complete"}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleDeleteTask(row._id)}
+              disabled={isDeleting}
+              className="text-red-600"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Task
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ),
     },
   ];
 
   const actions = (
-    <>
-      <Select value={selectedYear} onValueChange={setSelectedYear}>
-        <SelectTrigger className="w-24 border-gray-200">
+    <div className="flex items-center gap-2">
+      <Select
+        value={filters.status || "all"}
+        onValueChange={(value) => handleFilterChange("status", value)}
+      >
+        <SelectTrigger className="w-32 border-gray-200">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="2023">2023</SelectItem>
-          <SelectItem value="2024">2024</SelectItem>
-          <SelectItem value="2025">2025</SelectItem>
+          <SelectItem value="all">All Status</SelectItem>
+          <SelectItem value="Pending">Pending</SelectItem>
+          <SelectItem value="In Progress">In Progress</SelectItem>
+          <SelectItem value="Completed">Completed</SelectItem>
+          <SelectItem value="Do not continue">Discontinued</SelectItem>
         </SelectContent>
       </Select>
       <Button
@@ -212,28 +238,43 @@ export function PendingTasksTable() {
         <Plus className="h-4 w-4 mr-2" />
         New Task
       </Button>
-    </>
+    </div>
   );
 
   return (
-    <>
+    <div className="space-y-4">
+      {error && (
+        <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+          {error}
+          <Button
+            variant="link"
+            size="sm"
+            onClick={() => dispatch(clearError())}
+            className="ml-2 p-0 h-auto"
+          >
+            Dismiss
+          </Button>
+        </div>
+      )}
+
       <DataTable
-        data={mockTasks}
+        data={tasks}
         columns={columns}
-        title="Pending Tasks"
-        subtitle="List of Pending Tasks"
+        title={title}
+        subtitle={description}
         actions={actions}
         selectable={true}
         onSelectionChange={setSelectedRows}
-        getRowId={(row) => row.id}
+        getRowId={(row) => row._id}
       />
 
       <AddTaskDialog open={isAddTaskOpen} onOpenChange={setIsAddTaskOpen} />
+
       <ViewNotesDialog
         open={isViewNotesOpen}
         onOpenChange={setIsViewNotesOpen}
         task={selectedTask}
       />
-    </>
+    </div>
   );
 }

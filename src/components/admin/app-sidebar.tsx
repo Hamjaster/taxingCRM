@@ -48,11 +48,11 @@ const menuItems = [
     icon: Users,
     href: "/admin/dashboard/clients",
   },
-  {
-    title: "Client Profile",
-    icon: UserCheck,
-    href: "/admin/dashboard/profile",
-  },
+  // {
+  //   title: "Client Profile",
+  //   icon: UserCheck,
+  //   href: "/admin/dashboard/profile",
+  // },
   {
     title: "Documents",
     icon: FileText,
@@ -104,6 +104,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => {
+                console.log(item.href, "...", pathname);
                 const isActive = pathname === item.href;
                 return (
                   <SidebarMenuItem key={item.title}>

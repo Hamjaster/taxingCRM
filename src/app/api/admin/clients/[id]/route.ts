@@ -11,12 +11,11 @@ export async function GET(
   try {
     await connectDB();
     const adminUser = requireAdmin(request);
-    const clientId = params.id;
+    const clientId = await params.id;
 
     const client = await Client.findOne({
       _id: clientId,
       assignedAdminId: adminUser.id,
-      status: 'Active'
     });
 
     if (!client) {
@@ -53,7 +52,7 @@ export async function PUT(
   try {
     await connectDB();
     const adminUser = requireAdmin(request);
-    const clientId = params.id;
+    const clientId = await params.id;
     const updates = await request.json();
 
     // Remove sensitive fields that shouldn't be updated via this endpoint
@@ -65,7 +64,7 @@ export async function PUT(
       {
         _id: clientId,
         assignedAdminId: adminUser.id,
-        status: 'Active'
+      
       },
       { $set: updates },
       { new: true, runValidators: true }
@@ -109,7 +108,7 @@ export async function DELETE(
   try {
     await connectDB();
     const adminUser = requireAdmin(request);
-    const clientId = params.id;
+    const clientId = await params.id;
 
     const client = await Client.findOneAndUpdate(
       {

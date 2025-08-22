@@ -312,3 +312,73 @@ export interface Folder {
   createdAt: string;
   documents: Document[];
 }
+
+export type InvoiceStatus = 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Cancelled';
+
+export interface Invoice {
+  _id: string;
+  invoiceNumber: string;
+  clientId: string;
+  assignedAdminId: string;
+  
+  // Invoice details
+  issueDate: Date;
+  dueDate: Date;
+  serviceName: string;
+  serviceDescription?: string;
+  
+  // Financial details
+  totalAmount: number;
+  
+  // Status and metadata
+  status: InvoiceStatus;
+  
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  
+  // Populated fields
+  client?: ClientUser;
+  assignedAdmin?: Admin;
+}
+
+export interface CreateInvoiceData {
+  clientId: string;
+  serviceName: string;
+  serviceDescription?: string;
+  dueDate: Date;
+  totalAmount: number;
+}
+
+export interface UpdateInvoiceData {
+  serviceName?: string;
+  serviceDescription?: string;
+  dueDate?: Date;
+  totalAmount?: number;
+  status?: InvoiceStatus;
+}
+
+export interface Task {
+  _id: string;
+  title: string;
+  description?: string;
+  category: string;
+  clientId: string;
+  assignedAdminId: string;
+  status: 'Pending' | 'In Progress' | 'Completed' | 'Do not continue';
+  priority: 'Low' | 'Medium' | 'High' | 'Urgent';
+  priceQuoted: number;
+  amountPaid: number;
+  remainingBalance: number;
+  dueDate?: Date;
+  startDate?: Date;
+  completedDate?: Date;
+  notes?: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  
+  // Populated fields
+  client?: ClientUser;
+  assignedAdmin?: Admin;
+}

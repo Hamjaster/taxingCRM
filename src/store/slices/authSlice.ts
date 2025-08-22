@@ -10,6 +10,7 @@ export interface AuthState {
   isLoading: boolean;
   error: string | null;
   clients: ClientUser[]; // For admin users to store their clients
+  selectedClient: ClientUser | null; // For viewing individual client details
   otp: {
     email: string | null;
     isRequired: boolean;
@@ -28,6 +29,7 @@ const initialState: AuthState = {
   isLoading: false,
   error: null,
   clients: [],
+  selectedClient: null,
   otp: {
     email: null,
     isRequired: false,
@@ -138,6 +140,29 @@ export const fetchAdminClients = createAsyncThunk(
       if (auth.isLoading || auth.clients.length > 0) {
         return false;
       }
+    }
+  }
+);
+
+// Fetch individual client by ID
+export const fetchClientById = createAsyncThunk(
+  'auth/fetchClientById',
+  async (clientId: string, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`/api/admin/clients/${clientId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return rejectWithValue(data.error ||data.message || 'Failed to fetch client');
+      }
+
+      return data.data ;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Network error');
     }
   }
 );
@@ -328,7 +353,10 @@ const authSlice = createSlice({
       state.role = null;
       state.isAuthenticated = false;
       state.clients = [];
+      state.selectedClient = null;
       state.error = null;
+      // Clear token from localStorage
+      localStorage.removeItem('token');
     },
     updateUserProfile: (state, action: PayloadAction<Partial<Admin | ClientUser>>) => {
       if (state.user) {
@@ -418,14 +446,30 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
       })
+      // Fetch client by ID cases
+      .addCase(fetchClientById.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchClientById.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.selectedClient = action.payload;
+      })
+      .addCase(fetchClientById.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
       // Logout cases
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
         state.role = null;
         state.isAuthenticated = false;
         state.clients = [];
+        state.selectedClient = null;
         state.error = null;
         state.isLoading = false;
+        // Clear token from localStorage
+        localStorage.removeItem('token');
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.error = action.payload as string;

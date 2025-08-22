@@ -27,6 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Link from "next/link";
 
 function StatusBadge({ status }: { status: boolean }) {
   if (status) {
@@ -139,9 +140,12 @@ export default function ClientListPage() {
                 : row.lastName.charAt(0)}
             </AvatarFallback>
           </Avatar>
-          <span className="font-medium text-gray-900">
+          <Link
+            className="font-medium text-gray-900 hover:text-blue-600 hover:underline cursor-pointer"
+            href={`/admin/dashboard/clients/${row._id}`}
+          >
             {row.businessName || `${row.firstName} ${row.lastName}`}
-          </span>
+          </Link>
         </div>
       ),
     },

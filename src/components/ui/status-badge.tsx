@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 
-type StatusType = "Completed" | "Do not continue" | "Pending";
+type StatusType = "Completed" | "Do not continue" | "Pending" | "In Progress";
 
 interface StatusBadgeProps {
   status: StatusType;
@@ -22,6 +22,13 @@ export function StatusBadge({ status }: StatusBadgeProps) {
           <span className="text-red-700 text-sm font-medium">
             Do not continue
           </span>
+        </div>
+      );
+    case "In Progress":
+      return (
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 border border-blue-200">
+          <X className="h-3 w-3 text-blue-600" />
+          <span className="text-blue-700 text-sm font-medium">In Progress</span>
         </div>
       );
     case "Pending":

@@ -38,19 +38,23 @@ import {
   Calendar,
   MoreHorizontal,
   Edit,
-  Eye,
+  Plus,
 } from "lucide-react";
 import {
   fetchTasks,
   updateTask,
+  deleteTask,
   setFilters,
   clearError,
   Task,
 } from "@/store/slices/taskSlice";
 import { DataTable, Column } from "@/components/ui/data-table";
-import { StatusBadge } from "../ui/status-badge";
 
-export function ClientTasks() {
+interface ClientTasksProps {
+  clientId: string;
+}
+
+export function ClientTasks({ clientId }: ClientTasksProps) {
   const dispatch = useAppDispatch();
   const { tasks, isLoading, pagination, filters, error, isUpdating } =
     useAppSelector((state) => state.tasks);
@@ -59,13 +63,11 @@ export function ClientTasks() {
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [taskNotes, setTaskNotes] = useState("");
-  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
-  const [newStatus, setNewStatus] = useState("");
 
-  // Fetch tasks when component mounts or filters change
+  // Fetch tasks for this specific client
   useEffect(() => {
-    dispatch(fetchTasks({ ...filters, limit: 20 }));
-  }, [dispatch, filters]);
+    dispatch(fetchTasks({ ...filters, clientId, limit: 20 }));
+  }, [dispatch, filters, clientId]);
 
   const handleStatusUpdate = async (taskId: string, status: string) => {
     await dispatch(
@@ -74,6 +76,12 @@ export function ClientTasks() {
         updates: { status },
       })
     );
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (confirm("Are you sure you want to delete this task?")) {
+      await dispatch(deleteTask(taskId));
+    }
   };
 
   const handleNotesUpdate = async () => {
@@ -146,70 +154,57 @@ export function ClientTasks() {
       title: "Task",
       sortable: true,
       render: (value, row) => (
-        <div className="flex flex-col px-4">
-          <span className="font-medium text-gray-900">{value}</span>
-          <span className="text-xs text-gray-500">{row.category}</span>
+        <div className="flex items-start gap-3">
+          {getStatusIcon(row.status)}
+          <div className="flex-1 min-w-0">
+            <h4 className="font-medium text-gray-900 mb-1 truncate">
+              {row.title}
+            </h4>
+            <p className="text-sm text-gray-600 line-clamp-2">
+              {row.description || "No description provided"}
+            </p>
+            <div className="flex items-center gap-2 mt-2">
+              <Badge className={getStatusColor(row.status)}>{row.status}</Badge>
+              <Badge className={getPriorityColor(row.priority)}>
+                {row.priority}
+              </Badge>
+              <Badge variant="outline">{row.category}</Badge>
+            </div>
+          </div>
         </div>
       ),
+      width: "40%",
     },
     {
       key: "dueDate",
       title: "Due Date",
+      sortable: true,
       render: (value) => (
-        <span className="text-gray-600">
-          {value ? new Date(value).toLocaleDateString() : "-"}
-        </span>
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <Calendar className="h-4 w-4" />
+          <span>
+            {value ? new Date(value).toLocaleDateString() : "No due date"}
+          </span>
+        </div>
       ),
     },
     {
       key: "priceQuoted",
-      title: "Price Quoted",
-      render: (value) => (
-        <span className="text-gray-600">${value.toFixed(2)}</span>
-      ),
-    },
-    {
-      key: "amountPaid",
-      title: "Amount Paid",
-      render: (value) => (
-        <span className="text-gray-600">${value.toFixed(2)}</span>
-      ),
-    },
-    {
-      key: "remainingBalance",
-      title: "Remaining Balance",
-      render: (value) => (
-        <span
-          className={`font-medium ${
-            value > 0 ? "text-red-600" : "text-green-600"
-          }`}
-        >
-          ${value.toFixed(2)}
-        </span>
-      ),
-    },
-    {
-      key: "status",
-      title: "Status",
-      render: (value) => <StatusBadge status={value} />,
-    },
-    {
-      key: "priority",
-      title: "Priority",
-      render: (value) => (
-        <span
-          className={`px-2 py-1 text-xs font-medium rounded-full ${
-            value === "Urgent"
-              ? "bg-red-100 text-red-800"
-              : value === "High"
-              ? "bg-orange-100 text-orange-800"
-              : value === "Medium"
-              ? "bg-yellow-100 text-yellow-800"
-              : "bg-gray-100 text-gray-800"
-          }`}
-        >
-          {value}
-        </span>
+      title: "Price",
+      sortable: true,
+      render: (value, row) => (
+        <div className="text-sm">
+          <div className="flex items-center gap-1 text-gray-600">
+            <DollarSign className="h-4 w-4" />
+            <span>Quoted: ${value.toFixed(2)}</span>
+          </div>
+          {row.remainingBalance > 0 && (
+            <div className="flex items-center gap-1 text-red-600 mt-1">
+              <DollarSign className="h-4 w-4" />
+              <span>Balance: ${row.remainingBalance.toFixed(2)}</span>
+            </div>
+          )}
+        </div>
       ),
     },
     {
@@ -232,7 +227,7 @@ export function ClientTasks() {
               }}
             >
               <MessageSquare className="h-4 w-4 mr-2" />
-              View/Add Notes
+              View/Edit Notes
             </DropdownMenuItem>
             {row.status === "Pending" && (
               <DropdownMenuItem
@@ -252,6 +247,13 @@ export function ClientTasks() {
                 Mark Complete
               </DropdownMenuItem>
             )}
+            <DropdownMenuItem
+              onClick={() => handleDeleteTask(row._id)}
+              className="text-red-600"
+            >
+              <AlertCircle className="h-4 w-4 mr-2" />
+              Delete Task
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ),
@@ -297,8 +299,8 @@ export function ClientTasks() {
       <DataTable
         data={tasks}
         columns={columns}
-        title={`My Tasks (${pagination.totalTasks})`}
-        subtitle="Your assigned tasks and their current status"
+        title={`Client Tasks (${pagination.totalTasks})`}
+        subtitle="Tasks assigned to this client"
         actions={actions}
         selectable={false}
         onSelectionChange={setSelectedRows}
