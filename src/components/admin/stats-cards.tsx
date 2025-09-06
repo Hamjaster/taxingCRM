@@ -1,118 +1,128 @@
 "use client";
 
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { TrendingUp, TrendingDown, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { MiniChart } from "@/components/ui/mini-chart";
-
-// Chart data
-const chartData = {
-  totalAccounts: [
-    { month: "Jan", value: 112 },
-    { month: "Feb", value: 190 },
-    { month: "Mar", value: 650 },
-    { month: "Apr", value: 300 },
-    { month: "May", value: 820 },
-    { month: "Jun", value: 410 },
-  ],
-  businessClients: [
-    { month: "Jan", value: 28 },
-    { month: "Feb", value: 44 },
-    { month: "Mar", value: 29 },
-    { month: "Apr", value: 61 },
-    { month: "May", value: 33 },
-    { month: "Jun", value: 55 },
-  ],
-  individualClients: [
-    { month: "Jan", value: 70 },
-    { month: "Feb", value: 60 },
-    { month: "Mar", value: 90 },
-    { month: "Apr", value: 75 },
-    { month: "May", value: 88 },
-    { month: "Jun", value: 66 },
-  ],
-  entityFormation: [
-    { month: "Jan", value: 5 },
-    { month: "Feb", value: 13 },
-    { month: "Mar", value: 7 },
-    { month: "Apr", value: 15 },
-    { month: "May", value: 9 },
-    { month: "Jun", value: 14 },
-  ],
-  registeredAgent: [
-    { month: "Jan", value: 10 },
-    { month: "Feb", value: 14 },
-    { month: "Mar", value: 6 },
-    { month: "Apr", value: 18 },
-    { month: "May", value: 7 },
-    { month: "Jun", value: 12 },
-  ],
-  publication: [
-    { month: "Jan", value: 17 },
-    { month: "Feb", value: 28 },
-    { month: "Mar", value: 20 },
-    { month: "Apr", value: 25 },
-    { month: "May", value: 19 },
-    { month: "Jun", value: 30 },
-  ],
-};
-
-const statsData = [
-  {
-    title: "Total Accounts",
-    value: "117",
-    change: "+5%",
-    changeValue: "+5%",
-    trend: "up" as const,
-    color: "green",
-    data: chartData.totalAccounts,
-  },
-  {
-    title: "Business Clients",
-    value: "36",
-    change: "+5%",
-    changeValue: "+5%",
-    trend: "up" as const,
-    color: "white",
-    data: chartData.businessClients,
-  },
-  {
-    title: "Individual Clients",
-    value: "81",
-    change: "+20%",
-    changeValue: "+20%, vs last month",
-    trend: "up" as const,
-    color: "white",
-    data: chartData.individualClients,
-  },
-  {
-    title: "Entity Formation",
-    value: "12",
-    change: "+40%",
-    changeValue: "+40%",
-    trend: "up" as const,
-    data: chartData.entityFormation,
-  },
-  {
-    title: "Registered Agent",
-    value: "11",
-    change: "+5%",
-    changeValue: "+156",
-    trend: "up" as const,
-    data: chartData.registeredAgent,
-  },
-  {
-    title: "Publication",
-    value: "23",
-    change: "+20%",
-    changeValue: "+156",
-    trend: "down" as const,
-    data: chartData.publication,
-  },
-];
+import { fetchClientStats } from "@/store/slices/statsSlice";
+import { AppDispatch, RootState } from "@/store";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function StatsCards() {
+  const dispatch = useDispatch<AppDispatch>();
+  const { chartData, currentStats, isLoading, error } = useSelector(
+    (state: RootState) => state.stats
+  );
+
+  useEffect(() => {
+    // Fetch stats on component mount
+    dispatch(fetchClientStats());
+
+    // Optionally, refresh stats every 5 minutes
+    const interval = setInterval(() => {
+      dispatch(fetchClientStats());
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [dispatch]);
+
+  // Prepare stats data for display
+  const statsData = [
+    {
+      title: "Total Accounts",
+      value: currentStats.totalAccounts.value.toString(),
+      change: `${currentStats.totalAccounts.change > 0 ? "+" : ""}${
+        currentStats.totalAccounts.change
+      }%`,
+      changeValue: `${currentStats.totalAccounts.change > 0 ? "+" : ""}${
+        currentStats.totalAccounts.change
+      }%`,
+      trend: currentStats.totalAccounts.trend,
+      color: "green" as const,
+      data: chartData.totalAccounts,
+    },
+    {
+      title: "Business Clients",
+      value: currentStats.businessClients.value.toString(),
+      change: `${currentStats.businessClients.change > 0 ? "+" : ""}${
+        currentStats.businessClients.change
+      }%`,
+      changeValue: `${currentStats.businessClients.change > 0 ? "+" : ""}${
+        currentStats.businessClients.change
+      }%`,
+      trend: currentStats.businessClients.trend,
+      color: "white" as const,
+      data: chartData.businessClients,
+    },
+    {
+      title: "Individual Clients",
+      value: currentStats.individualClients.value.toString(),
+      change: `${currentStats.individualClients.change > 0 ? "+" : ""}${
+        currentStats.individualClients.change
+      }%`,
+      changeValue: `${currentStats.individualClients.change > 0 ? "+" : ""}${
+        currentStats.individualClients.change
+      }%, vs last month`,
+      trend: currentStats.individualClients.trend,
+      color: "white" as const,
+      data: chartData.individualClients,
+    },
+    {
+      title: "Entity Formation",
+      value: currentStats.entityFormation.value.toString(),
+      change: `${currentStats.entityFormation.change > 0 ? "+" : ""}${
+        currentStats.entityFormation.change
+      }%`,
+      changeValue: `${currentStats.entityFormation.change > 0 ? "+" : ""}${
+        currentStats.entityFormation.change
+      }%`,
+      trend: currentStats.entityFormation.trend,
+      data: chartData.entityFormation,
+    },
+    {
+      title: "Registered Agent",
+      value: currentStats.registeredAgent.value.toString(),
+      change: `${currentStats.registeredAgent.change > 0 ? "+" : ""}${
+        currentStats.registeredAgent.change
+      }%`,
+      changeValue: `${currentStats.registeredAgent.change > 0 ? "+" : ""}${
+        currentStats.registeredAgent.change
+      }%`,
+      trend: currentStats.registeredAgent.trend,
+      data: chartData.registeredAgent,
+    },
+    {
+      title: "Publication",
+      value: currentStats.publication.value.toString(),
+      change: `${currentStats.publication.change > 0 ? "+" : ""}${
+        currentStats.publication.change
+      }%`,
+      changeValue: `${currentStats.publication.change > 0 ? "+" : ""}${
+        currentStats.publication.change
+      }%`,
+      trend: currentStats.publication.trend,
+      data: chartData.publication,
+    },
+  ];
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>Error loading statistics: {error}</AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {isLoading && (
+        <div className="flex items-center justify-center p-4">
+          <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+          <span className="ml-2 text-gray-500">Loading statistics...</span>
+        </div>
+      )}
+
       <div className="grid gap-6 md:grid-cols-3">
         {statsData.map((stat) => (
           <Card
@@ -121,10 +131,10 @@ export function StatsCards() {
               stat.color === "green"
                 ? "bg-green-600 text-white"
                 : "bg-white border border-gray-200"
-            }`}
+            } ${isLoading ? "opacity-50" : ""}`}
           >
             <CardContent className="px-4">
-              <div className="flex  items-center justify-between">
+              <div className="flex items-center justify-between">
                 <div className="space-y-3">
                   <p
                     className={`text-sm font-medium ${
@@ -135,7 +145,9 @@ export function StatsCards() {
                   >
                     {stat.title}
                   </p>
-                  <p className="text-3xl font-bold mt-1">{stat.value}</p>
+                  <p className="text-3xl font-bold mt-1">
+                    {isLoading ? "..." : stat.value}
+                  </p>
                   <div className="flex items-center gap-1 mt-2">
                     {stat.trend === "up" ? (
                       <TrendingUp className="h-3 w-3 text-green-500" />
@@ -151,16 +163,18 @@ export function StatsCards() {
                           : "text-red-600"
                       }`}
                     >
-                      {stat.changeValue}
+                      {isLoading ? "..." : stat.changeValue}
                     </span>
                   </div>
                 </div>
-                <MiniChart
-                  className="w-[50%]"
-                  data={stat.data}
-                  trend={stat.trend}
-                  size="lg"
-                />
+                {stat.data && stat.data.length > 0 && (
+                  <MiniChart
+                    className="w-[50%]"
+                    data={stat.data}
+                    trend={stat.trend}
+                    size="lg"
+                  />
+                )}
               </div>
             </CardContent>
           </Card>

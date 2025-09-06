@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/hooks/redux";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,19 +14,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Plus, Search, Check, ChevronsUpDown } from "lucide-react";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Plus, Check, ChevronsUpDown } from "lucide-react";
 import { ReusableDialog } from "@/components/ui/reusable-dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -37,7 +39,7 @@ import {
   clearError,
 } from "@/store/slices/taskSlice";
 import { fetchAdminClients } from "@/store/slices/authSlice";
-import { Client, ClientUser } from "@/types";
+import type { ClientUser } from "@/types";
 
 interface AddTaskDialogProps {
   open: boolean;
@@ -78,11 +80,8 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
   );
   const [activeClients, setActiveClients] = useState<ClientUser[]>([]);
   const [formData, setFormData] = useState<TaskFormData>(initialFormData);
-  const [clientSearchOpen, setClientSearchOpen] = useState(false);
-  const [clientSearchValue, setClientSearchValue] = useState("");
-  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [showCategoryDialog, setShowCategoryDialog] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [newCategoryDescription, setNewCategoryDescription] = useState("");
   const [isAddingCategory, setIsAddingCategory] = useState(false);
 
   useEffect(() => {
@@ -91,7 +90,6 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
     );
   }, [clients]);
 
-  // Fetch data when dialog opens
   useEffect(() => {
     if (open) {
       if (!hasFetchedClients) {
@@ -101,28 +99,6 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
     }
   }, [open, hasFetchedClients, dispatch]);
 
-  // Filter clients based on search
-  const filteredClients = useMemo(() => {
-    if (!clientSearchValue) return activeClients;
-
-    const searchLower = clientSearchValue.toLowerCase();
-
-    return activeClients.filter((client) => {
-      const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
-      const businessName = client.businessName?.toLowerCase() || "";
-      const entityName = client.entityName?.toLowerCase() || "";
-      const email = client.email?.toLowerCase() || "";
-
-      return (
-        fullName.includes(searchLower) ||
-        businessName.includes(searchLower) ||
-        entityName.includes(searchLower) ||
-        email.includes(searchLower)
-      );
-    });
-  }, [activeClients, clientSearchValue]);
-
-  // Get selected client display name
   const selectedClient = activeClients.find(
     (client) => client._id === formData.clientId
   );
@@ -146,8 +122,8 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
       clientId: formData.clientId,
       status: formData.status,
       priority: formData.priority,
-      priceQuoted: parseFloat(formData.priceQuoted) || 0,
-      amountPaid: parseFloat(formData.amountPaid) || 0,
+      priceQuoted: Number.parseFloat(formData.priceQuoted) || 0,
+      amountPaid: Number.parseFloat(formData.amountPaid) || 0,
       dueDate: formData.dueDate || undefined,
       notes: formData.notes || undefined,
     };
@@ -156,17 +132,14 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
 
     if (createTask.fulfilled.match(result)) {
       setFormData(initialFormData);
-      setClientSearchValue("");
       onOpenChange(false);
     }
   };
 
   const handleCancel = () => {
     setFormData(initialFormData);
-    setClientSearchValue("");
-    setShowAddCategory(false);
+    setShowCategoryDialog(false);
     setNewCategoryName("");
-    setNewCategoryDescription("");
     dispatch(clearError());
     onOpenChange(false);
   };
@@ -183,18 +156,26 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
     const result = await dispatch(
       createTaskCategory({
         name: newCategoryName.trim(),
-        description: newCategoryDescription.trim() || undefined,
+        description: undefined,
       })
     );
 
     if (createTaskCategory.fulfilled.match(result)) {
       setFormData((prev) => ({ ...prev, category: result.payload.name }));
-      setShowAddCategory(false);
+      setShowCategoryDialog(false);
       setNewCategoryName("");
-      setNewCategoryDescription("");
     }
 
     setIsAddingCategory(false);
+  };
+
+  const handleOpenCategoryDialog = () => {
+    setShowCategoryDialog(true);
+  };
+
+  const handleCloseCategoryDialog = () => {
+    setShowCategoryDialog(false);
+    setNewCategoryName("");
   };
 
   const footer = (
@@ -224,284 +205,276 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
   );
 
   return (
-    <ReusableDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title="Add New Task"
-      size="md"
-      footer={footer}
-    >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {error && (
-          <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-            {error}
-          </div>
-        )}
-
-        {/* Task Title */}
-        <div className="space-y-2">
-          <Label htmlFor="title">Task Title *</Label>
-          <Input
-            id="title"
-            placeholder="Enter task title"
-            value={formData.title}
-            onChange={(e) => updateFormData("title", e.target.value)}
-            required
-          />
-        </div>
-
-        {/* Client Search */}
-        <div className="space-y-2">
-          <Label htmlFor="clientSearch">Select Client *</Label>
-          <Popover open={clientSearchOpen} onOpenChange={setClientSearchOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={clientSearchOpen}
-                className="w-full justify-between"
-              >
-                {clientDisplayName || "Select client..."}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full p-0">
-              <Command>
-                <CommandInput
-                  placeholder="Search clients..."
-                  value={clientSearchValue}
-                  onValueChange={setClientSearchValue}
-                />
-                <CommandList>
-                  <CommandEmpty>No clients found.</CommandEmpty>
-                  <CommandGroup>
-                    {filteredClients.map((client) => {
-                      const displayName =
-                        client.businessName ||
-                        client.entityName ||
-                        `${client.firstName} ${client.lastName}`;
-
-                      return (
-                        <CommandItem
-                          key={client._id}
-                          value={displayName}
-                          className="cursor-pointer text-black"
-                          onSelect={() => {
-                            updateFormData("clientId", client._id);
-                            setClientSearchOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              formData.clientId === client._id
-                                ? "opacity-100"
-                                : "opacity-0"
-                            )}
-                          />
-                          <div className="flex flex-col">
-                            <span>{displayName}</span>
-                            <span className="text-xs ">
-                              {client.email} • {client.clientType}
-                            </span>
-                          </div>
-                        </CommandItem>
-                      );
-                    })}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          {/* Category Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="category">Category *</Label>
-            <Select
-              value={formData.category}
-              onValueChange={(value) => updateFormData("category", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select Category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category._id} value={category.name}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Due Date */}
-          <div className="space-y-2">
-            <Label htmlFor="dueDate">Due Date</Label>
-            <Input
-              id="dueDate"
-              type="date"
-              value={formData.dueDate}
-              onChange={(e) => updateFormData("dueDate", e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Description */}
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            placeholder="Enter task description..."
-            value={formData.description}
-            onChange={(e) => updateFormData("description", e.target.value)}
-            rows={2}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          {/* Priority */}
-          <div className="space-y-2">
-            <Label htmlFor="priority">Priority</Label>
-            <Select
-              value={formData.priority}
-              onValueChange={(value) => updateFormData("priority", value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Low">Low</SelectItem>
-                <SelectItem value="Medium">Medium</SelectItem>
-                <SelectItem value="High">High</SelectItem>
-                <SelectItem value="Urgent">Urgent</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Status */}
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) => updateFormData("status", value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Pending">Pending</SelectItem>
-                <SelectItem value="In Progress">In Progress</SelectItem>
-                <SelectItem value="Completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          {/* Price Quoted */}
-          <div className="space-y-2">
-            <Label htmlFor="priceQuoted">Price Quoted</Label>
-            <Input
-              id="priceQuoted"
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="0.00"
-              value={formData.priceQuoted}
-              onChange={(e) => updateFormData("priceQuoted", e.target.value)}
-            />
-          </div>
-
-          {/* Amount Paid */}
-          <div className="space-y-2">
-            <Label htmlFor="amountPaid">Amount Paid</Label>
-            <Input
-              id="amountPaid"
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="0.00"
-              value={formData.amountPaid}
-              onChange={(e) => updateFormData("amountPaid", e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Notes */}
-        <div className="space-y-2">
-          <Label htmlFor="notes">Notes</Label>
-          <Textarea
-            id="notes"
-            placeholder="Enter notes..."
-            value={formData.notes}
-            onChange={(e) => updateFormData("notes", e.target.value)}
-            rows={3}
-          />
-        </div>
-
-        {/* Add New Category Section */}
-        <div className="pt-2">
-          {!showAddCategory ? (
-            <div
-              className="flex items-center gap-2 text-green-600 cursor-pointer hover:text-green-700"
-              onClick={() => setShowAddCategory(true)}
-            >
-              <Plus className="h-4 w-4" />
-              <span className="text-sm">Add New Category</span>
-            </div>
-          ) : (
-            <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium">Add New Category</h4>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setShowAddCategory(false);
-                    setNewCategoryName("");
-                    setNewCategoryDescription("");
-                  }}
-                >
-                  ×
-                </Button>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="newCategoryName">Category Name</Label>
-                <Input
-                  id="newCategoryName"
-                  placeholder="Enter category name"
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="newCategoryDescription">
-                  Description (Optional)
-                </Label>
-                <Textarea
-                  id="newCategoryDescription"
-                  placeholder="Enter category description"
-                  value={newCategoryDescription}
-                  onChange={(e) => setNewCategoryDescription(e.target.value)}
-                  rows={2}
-                />
-              </div>
-              <Button
-                type="button"
-                onClick={handleAddCategory}
-                disabled={!newCategoryName.trim() || isAddingCategory}
-                className="bg-green-600 hover:bg-green-700"
-                size="sm"
-              >
-                {isAddingCategory ? "Adding..." : "Add Category"}
-              </Button>
+    <>
+      <ReusableDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        title="Add New Task"
+        size="md"
+        footer={footer}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+              {error}
             </div>
           )}
-        </div>
-      </form>
-    </ReusableDialog>
+
+          <div className="space-y-2">
+            <Label htmlFor="title">Task Title *</Label>
+            <Input
+              id="title"
+              placeholder="Enter task title"
+              value={formData.title}
+              onChange={(e) => updateFormData("title", e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="clientSearch">Select Client *</Label>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-between bg-transparent"
+                >
+                  {clientDisplayName || "Select client..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-full max-h-48 overflow-y-auto">
+                {activeClients.length === 0 ? (
+                  <DropdownMenuItem disabled>
+                    No clients found.
+                  </DropdownMenuItem>
+                ) : (
+                  activeClients.map((client) => {
+                    const displayName =
+                      client.businessName ||
+                      client.entityName ||
+                      `${client.firstName} ${client.lastName}`;
+
+                    return (
+                      <DropdownMenuItem
+                        key={client._id}
+                        onClick={() => updateFormData("clientId", client._id)}
+                        className="flex items-center"
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            formData.clientId === client._id
+                              ? "opacity-100"
+                              : "opacity-0"
+                          )}
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-sm">{displayName}</span>
+                          <span className="text-xs text-gray-500">
+                            {client.email} • {client.clientType}
+                          </span>
+                        </div>
+                      </DropdownMenuItem>
+                    );
+                  })
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="category">Category *</Label>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between bg-transparent"
+                  >
+                    {formData.category || "Select Category"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-full">
+                  {categories.map((category) => (
+                    <DropdownMenuItem
+                      key={category._id}
+                      onClick={() => updateFormData("category", category.name)}
+                      className="flex items-center"
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          formData.category === category.name
+                            ? "opacity-100"
+                            : "opacity-0"
+                        )}
+                      />
+                      <span className="text-sm">{category.name}</span>
+                    </DropdownMenuItem>
+                  ))}
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem
+                    onClick={handleOpenCategoryDialog}
+                    className="flex items-center gap-2 text-green-600"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span className="text-sm">Add New Category</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dueDate">Due Date</Label>
+              <Input
+                id="dueDate"
+                type="date"
+                value={formData.dueDate}
+                onChange={(e) => updateFormData("dueDate", e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              placeholder="Enter task description..."
+              value={formData.description}
+              onChange={(e) => updateFormData("description", e.target.value)}
+              rows={2}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="priority">Priority</Label>
+              <Select
+                value={formData.priority}
+                onValueChange={(value) => updateFormData("priority", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Low">Low</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="Urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => updateFormData("status", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="In Progress">In Progress</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="priceQuoted">Price Quoted</Label>
+              <Input
+                id="priceQuoted"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={formData.priceQuoted}
+                onChange={(e) => updateFormData("priceQuoted", e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="amountPaid">Amount Paid</Label>
+              <Input
+                id="amountPaid"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={formData.amountPaid}
+                onChange={(e) => updateFormData("amountPaid", e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              placeholder="Enter notes..."
+              value={formData.notes}
+              onChange={(e) => updateFormData("notes", e.target.value)}
+              rows={3}
+            />
+          </div>
+        </form>
+      </ReusableDialog>
+
+      <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Category</DialogTitle>
+            <DialogDescription>
+              Enter a name for the new task category.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="categoryName">Category Name</Label>
+              <Input
+                id="categoryName"
+                placeholder="Enter category name"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddCategory();
+                  } else if (e.key === "Escape") {
+                    handleCloseCategoryDialog();
+                  }
+                }}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCloseCategoryDialog}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleAddCategory}
+              disabled={!newCategoryName.trim() || isAddingCategory}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isAddingCategory ? "Adding..." : "Add Category"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -406,15 +406,12 @@ export function ClientDocuments({ client }: ClientDocumentsProps) {
         onValueChange={setActiveDocTab}
         className="space-y-4"
       >
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="documents" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             Documents
           </TabsTrigger>
-          <TabsTrigger value="uploads" className="flex items-center gap-2">
-            <Upload className="h-4 w-4" />
-            Uploads
-          </TabsTrigger>
+
           <TabsTrigger value="invoices" className="flex items-center gap-2">
             <Receipt className="h-4 w-4" />
             Invoices
@@ -422,19 +419,10 @@ export function ClientDocuments({ client }: ClientDocumentsProps) {
         </TabsList>
 
         <TabsContent value="documents">
-          <Documents isBordered title="Documents" folders={mockFolders} />
-        </TabsContent>
-
-        <TabsContent value="uploads">
-          <DataTable
-            data={mockUploads}
-            columns={uploadColumns}
-            title="Uploads"
-            subtitle="Files uploaded by client or admin"
-            actions={uploadsActions}
-            selectable={false}
-            onSelectionChange={() => {}}
-            getRowId={(row) => row.id}
+          <Documents
+            isBordered
+            title="Client Documents"
+            clientId={client._id}
           />
         </TabsContent>
 

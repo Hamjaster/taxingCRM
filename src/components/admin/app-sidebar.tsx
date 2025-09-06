@@ -34,7 +34,7 @@ import {
 } from "../ui/dropdown-menu";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { useAppDispatch } from "@/hooks/redux";
+import { useAppDispatch, useAppSelector } from "@/hooks/redux";
 import { logoutUser, clearAuth } from "@/store/slices/authSlice";
 
 const menuItems = [
@@ -69,6 +69,36 @@ export function AppSidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useAppDispatch();
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+
+  // Helper function to get user display info
+  const getUserDisplayInfo = () => {
+    if (!user) {
+      return {
+        name: "User",
+        email: "user@example.com",
+        initials: "U",
+        profileImage: "/placeholder.svg?height=32&width=32",
+      };
+    }
+
+    const fullName = `${user.firstName} ${user.lastName}`.trim();
+    const initials = `${user.firstName?.charAt(0) || ""}${
+      user.lastName?.charAt(0) || ""
+    }`.toUpperCase();
+
+    // Check if user has profileImage (only ClientUser has this property)
+    const profileImage = "profileImage" in user ? user.profileImage : undefined;
+
+    return {
+      name: fullName || "User",
+      email: user.email || "user@example.com",
+      initials: initials || "U",
+      profileImage: profileImage || "/placeholder.svg?height=32&width=32",
+    };
+  };
+
+  const userInfo = getUserDisplayInfo();
 
   const signOut = async () => {
     try {
@@ -104,7 +134,6 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => {
-                console.log(item.href, "...", pathname);
                 const isActive = pathname === item.href;
                 return (
                   <SidebarMenuItem key={item.title}>
@@ -138,13 +167,13 @@ export function AppSidebar() {
             <DropdownMenuTrigger asChild>
               <button className="flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-gray-50 transition-colors group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="/placeholder.svg?height=32&width=32" />
-                  <AvatarFallback>MA</AvatarFallback>
+                  <AvatarImage src={userInfo.profileImage} />
+                  <AvatarFallback>{userInfo.initials}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-1 flex-col group-data-[collapsible=icon]:hidden">
-                  <span className="text-sm font-medium">M Ali</span>
+                  <span className="text-sm font-medium">{userInfo.name}</span>
                   <span className="text-xs text-gray-500">
-                    johndoe1@gmail.com
+                    {userInfo.email}
                   </span>
                 </div>
                 <ChevronUp className="h-4 w-4 text-gray-400 group-data-[collapsible=icon]:hidden" />
@@ -158,13 +187,13 @@ export function AppSidebar() {
             >
               <div className="flex items-center gap-3 p-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="/placeholder.svg?height=32&width=32" />
-                  <AvatarFallback>MA</AvatarFallback>
+                  <AvatarImage src={userInfo.profileImage} />
+                  <AvatarFallback>{userInfo.initials}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium">M Ali</span>
+                  <span className="text-sm font-medium">{userInfo.name}</span>
                   <span className="text-xs text-gray-500">
-                    johndoe1@gmail.com
+                    {userInfo.email}
                   </span>
                 </div>
               </div>

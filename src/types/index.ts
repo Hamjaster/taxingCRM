@@ -313,6 +313,46 @@ export interface Folder {
   documents: Document[];
 }
 
+// Updated Document types for the real system
+export interface RealDocument {
+  _id: string;
+  name: string;
+  originalName: string;
+  fileType: 'pdf' | 'doc' | 'docx' | 'image' | 'txt' | 'xlsx' | 'xls' | 'other';
+  mimeType: string;
+  size: number;
+  s3Key: string;
+  s3Url: string;
+  folderId: string;
+  clientId: string;
+  uploadedByAdminId: string;
+  description?: string;
+  tags?: string[];
+  fileExtension: string;
+  isPublic: boolean;
+  downloadCount: number;
+  s3Bucket: string;
+  s3ETag?: string;
+  s3VersionId?: string;
+  isActive: boolean;
+  expiresAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface RealFolder {
+  _id: string;
+  name: string;
+  clientId: string;
+  assignedAdminId: string;
+  description?: string;
+  parentFolderId?: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  documentCount?: number;
+}
+
 export type InvoiceStatus = 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Cancelled';
 
 export interface Invoice {
@@ -381,4 +421,12 @@ export interface Task {
   // Populated fields
   client?: ClientUser;
   assignedAdmin?: Admin;
+}
+
+
+export interface ChartDataType {
+  totalAccounts: Array<{ month: string; value: number }>;
+  businessClients: Array<{ month: string; value: number }>;
+  individualClients: Array<{ month: string; value: number }>;
+  entityFormation: Array<{ month: string; value: number }>;
 }

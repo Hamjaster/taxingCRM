@@ -1159,40 +1159,24 @@ export function CreateClientDialog({
         </div>
         <div className="space-y-2">
           <Label htmlFor="city">City</Label>
-          <Select
+          <Input
+            id="city"
+            placeholder="Write City"
             value={formData.city}
-            onValueChange={(value) => updateFormData("city", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select City" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="new-york">New York</SelectItem>
-              <SelectItem value="los-angeles">Los Angeles</SelectItem>
-              <SelectItem value="chicago">Chicago</SelectItem>
-              <SelectItem value="houston">Houston</SelectItem>
-            </SelectContent>
-          </Select>
+            onChange={(e) => updateFormData("city", e.target.value)}
+          />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="state">State</Label>
-          <Select
+          <Input
+            id="state"
+            placeholder="Write State"
             value={formData.state}
-            onValueChange={(value) => updateFormData("state", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select State" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ny">New York</SelectItem>
-              <SelectItem value="ca">California</SelectItem>
-              <SelectItem value="tx">Texas</SelectItem>
-              <SelectItem value="fl">Florida</SelectItem>
-            </SelectContent>
-          </Select>
+            onChange={(e) => updateFormData("state", e.target.value)}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="zipCode">Zip Code</Label>

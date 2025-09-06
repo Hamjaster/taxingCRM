@@ -144,8 +144,8 @@ export default function ClientProfilePage() {
         {activeTab === "info" && renderInfoTab()}
         {activeTab === "documents" && (
           <Documents
-            title="Documentations"
-            folders={mockFolders}
+            title="My Documents"
+            clientId={user?.id}
             isBordered={false}
           />
         )}

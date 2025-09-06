@@ -1,19 +1,14 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { FileText, Download, Upload, Eye, Calendar, User } from "lucide-react";
-import { Folder } from "@/types";
+"use client";
+
+import { useAppSelector } from "@/hooks/redux";
 import { Documents } from "@/components/ui/documents";
-import { mockFolders } from "@/types/constants";
 
 export default function DocumentsPage() {
+  const { user } = useAppSelector((state) => state.auth);
+
   return (
     <div className="flex-1 space-y-6 p-6 ">
-      <Documents
-        isBordered={true}
-        title="Documentations"
-        folders={mockFolders}
-      />
+      <Documents isBordered={true} title="My Documents" clientId={user?.id} />
     </div>
   );
 }

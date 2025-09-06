@@ -99,7 +99,7 @@ export default function HomePage() {
             Get Started
           </h2>
 
-          <Link href="/admin/login">
+          <Link href="/admin/login" className="my-4">
             <Button className="w-full bg-green-600 hover:bg-green-700 text-white py-3">
               Admin Login
             </Button>
