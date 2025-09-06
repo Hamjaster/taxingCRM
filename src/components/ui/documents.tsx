@@ -339,13 +339,21 @@ export function Documents({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
-                      onClick={() => handleDownloadDocument(document)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleDownloadDocument(document);
+                      }}
                     >
                       <Download className="mr-2 h-4 w-4" />
                       Download
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleDeleteDocument(document)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleDeleteDocument(document);
+                      }}
                       className="text-red-600"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
@@ -510,7 +518,13 @@ export function Documents({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleEditFolder(folder)}>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleEditFolder(folder);
+                    }}
+                  >
                     <Edit className="mr-2 h-4 w-4" />
                     Edit
                   </DropdownMenuItem>
