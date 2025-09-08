@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Receipt,
@@ -230,7 +231,6 @@ export function ClientInvoices({ clientId }: ClientInvoicesProps) {
           <div className="font-medium">
             {formatCurrency(invoice.totalAmount)}
           </div>
-
         </div>
       ),
     },
@@ -356,7 +356,7 @@ export function ClientInvoices({ clientId }: ClientInvoicesProps) {
 
       {/* Create Invoice Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px] max-h-[80vh] ">
           <DialogHeader>
             <DialogTitle>Create New Invoice</DialogTitle>
             <DialogDescription>
@@ -419,25 +419,19 @@ export function ClientInvoices({ clientId }: ClientInvoicesProps) {
               <Label htmlFor="dueDate" className="text-right">
                 Due Date *
               </Label>
-              <Input
+              <DatePicker
                 id="dueDate"
-                type="date"
-                value={
-                  formData.dueDate
-                    ? new Date(formData.dueDate).toISOString().split("T")[0]
-                    : ""
-                }
-                onChange={(e) =>
+                date={formData.dueDate}
+                onDateChange={(date) =>
                   setFormData({
                     ...formData,
-                    dueDate: new Date(e.target.value),
+                    dueDate: date,
                   })
                 }
+                placeholder="Select due date"
                 className="col-span-3"
               />
             </div>
-       
-           
           </div>
           <DialogFooter>
             <Button
@@ -508,7 +502,7 @@ export function ClientInvoices({ clientId }: ClientInvoicesProps) {
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                        totalAmount: parseFloat(e.target.value) || 0,
+                    totalAmount: parseFloat(e.target.value) || 0,
                   })
                 }
                 className="col-span-3"

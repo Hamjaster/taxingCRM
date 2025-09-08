@@ -22,6 +22,7 @@ import { RegisteredAgent } from "@/components/admin/registered-agent";
 import { Publication } from "@/components/admin/publication";
 import { ClientServices } from "@/components/admin/client-services";
 import { ClientInvoices } from "@/components/admin/client-invoices";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface ClientProfilePageProps {
   params: {
@@ -99,7 +100,7 @@ export default function ClientProfilePage({ params }: ClientProfilePageProps) {
 
   if (isLoading) {
     return (
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-6 h-[80vh] justify-center items-center">
         <div className="flex justify-center items-center py-12">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>

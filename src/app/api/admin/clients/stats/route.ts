@@ -124,37 +124,32 @@ export async function GET(request: NextRequest) {
     };
 
     // Get total counts for all time
-    const totalCounts = await Client.aggregate([
-      { $match: { assignedAdminId: adminUser.id } },
+    
+    const stats = await Client.aggregate([
       {
         $group: {
-          _id: '$clientType',
+          _id: "$clientType",
           count: { $sum: 1 }
         }
       }
     ]);
+    console.log(stats, 'stats !!');
 
-    const totalStats = {
-      total: 0,
-      business: 0,
-      individual: 0,
-      entity: 0,
+    // Format results
+    let result = {
+      totalAccounts: 0,
+      businessAccounts: 0,
+      individualAccounts: 0,
+      entityAccounts: 0
     };
 
-    totalCounts.forEach(item => {
-      totalStats.total += item.count;
-      switch (item._id) {
-        case 'Business':
-          totalStats.business = item.count;
-          break;
-        case 'Individual':
-          totalStats.individual = item.count;
-          break;
-        case 'Entity':
-          totalStats.entity = item.count;
-          break;
-      }
+    stats.forEach(item => {
+      result.totalAccounts += item.count;
+      if (item._id === "Business") result.businessAccounts = item.count;
+      if (item._id === "Individual") result.individualAccounts = item.count;
+      if (item._id === "Entity") result.entityAccounts = item.count;
     });
+
 
     // Calculate percentage changes
     const changes = {
@@ -171,22 +166,22 @@ export async function GET(request: NextRequest) {
         chartData,
         currentStats: {
           totalAccounts: {
-            value: totalStats.total,
+            value: result.totalAccounts,
             change: changes.total,
             trend: changes.total >= 0 ? 'up' : 'down'
           },
           businessClients: {
-            value: totalStats.business,
+            value: result.businessAccounts,
             change: changes.business,
             trend: changes.business >= 0 ? 'up' : 'down'
           },
           individualClients: {
-            value: totalStats.individual,
+            value: result.individualAccounts,
             change: changes.individual,
             trend: changes.individual >= 0 ? 'up' : 'down'
           },
           entityFormation: {
-            value: totalStats.entity,
+            value: result.entityAccounts,
             change: changes.entity,
             trend: changes.entity >= 0 ? 'up' : 'down'
           },

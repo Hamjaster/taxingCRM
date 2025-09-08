@@ -32,7 +32,7 @@ import {
 } from "../ui/dropdown-menu";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { useAppDispatch } from "@/hooks/redux";
+import { useAppDispatch, useAppSelector } from "@/hooks/redux";
 import { logoutUser, clearAuth } from "@/store/slices/authSlice";
 
 const menuItems = [
@@ -67,6 +67,24 @@ export function ClientSidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useAppDispatch();
+  const { user, isLoading } = useAppSelector((state) => state.auth);
+
+  // Helper functions to get user data
+  const getUserInitials = () => {
+    if (!user) return "U";
+    const firstName = user.firstName || "";
+    const lastName = user.lastName || "";
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  };
+
+  const getUserDisplayName = () => {
+    if (!user) return "User";
+    return `${user.firstName || ""} ${user.lastName || ""}`.trim() || "User";
+  };
+
+  const getUserEmail = () => {
+    return user?.email || "";
+  };
 
   const signOut = async () => {
     try {
@@ -131,59 +149,65 @@ export function ClientSidebar() {
 
       <SidebarFooter className="border-t border-gray-200 bg-white p-4 group-data-[collapsible=icon]:p-2">
         <div className="mt-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-gray-50 transition-colors group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="/placeholder.svg?height=32&width=32" />
-                  <AvatarFallback>MA</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-1 flex-col group-data-[collapsible=icon]:hidden">
-                  <span className="text-sm font-medium">M Ali</span>
-                  <span className="text-xs text-gray-500">
-                    johndoe1@gmail.com
-                  </span>
-                </div>
-                <ChevronUp className="h-4 w-4 text-gray-400 group-data-[collapsible=icon]:hidden" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              side="top"
-              align="start"
-              className="w-56 mb-2"
-              sideOffset={8}
-            >
-              <div className="flex items-center gap-3 p-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="/placeholder.svg?height=32&width=32" />
-                  <AvatarFallback>MA</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">M Ali</span>
-                  <span className="text-xs text-gray-500">
-                    johndoe1@gmail.com
-                  </span>
-                </div>
+          {isLoading ? (
+            <div className="flex w-full items-center gap-3 rounded-lg p-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
+              <div className="h-8 w-8 bg-gray-200 rounded-full animate-pulse"></div>
+              <div className="flex flex-1 flex-col gap-1 group-data-[collapsible=icon]:hidden">
+                <div className="h-4 bg-gray-200 rounded animate-pulse w-20"></div>
+                <div className="h-3 bg-gray-200 rounded animate-pulse w-32"></div>
               </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer">
-                <User className="h-4 w-4 mr-2" />
-                Profile Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
-                <Settings className="h-4 w-4 mr-2" />
-                Account Settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => signOut()}
-                className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+            </div>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-gray-50 transition-colors group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={"/placeholder.svg?height=32&width=32"} />
+                    <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-1 flex-col group-data-[collapsible=icon]:hidden">
+                    <span className="text-sm font-medium">
+                      {getUserDisplayName()}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {getUserEmail()}
+                    </span>
+                  </div>
+                  <ChevronUp className="h-4 w-4 text-gray-400 group-data-[collapsible=icon]:hidden" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                side="top"
+                align="start"
+                className="w-56 mb-2"
+                sideOffset={8}
               >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <div className="flex items-center gap-3 p-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={"/placeholder.svg?height=32&width=32"} />
+                    <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">
+                      {getUserDisplayName()}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {getUserEmail()}
+                    </span>
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem
+                  onClick={() => signOut()}
+                  className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </SidebarFooter>
       <SidebarRail />
