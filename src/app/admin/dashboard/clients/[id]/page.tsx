@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/hooks/redux";
-import { clearError, fetchClientById } from "@/store/slices/authSlice";
+import {
+  clearError,
+  fetchClientById,
+  updateClientDetails,
+} from "@/store/slices/authSlice";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +27,7 @@ import { Publication } from "@/components/admin/publication";
 import { ClientServices } from "@/components/admin/client-services";
 import { ClientInvoices } from "@/components/admin/client-invoices";
 import { DatePicker } from "@/components/ui/date-picker";
+import { EditClientDialog } from "@/components/admin/edit-client-dialog";
 
 interface ClientProfilePageProps {
   params: {
@@ -36,6 +41,7 @@ export default function ClientProfilePage({ params }: ClientProfilePageProps) {
     (state) => state.auth
   );
   const [activeTab, setActiveTab] = useState("personal-info");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const router = useRouter();
   useEffect(() => {
     if (params.id) {
@@ -56,8 +62,19 @@ export default function ClientProfilePage({ params }: ClientProfilePageProps) {
   }, [selectedClient]);
 
   const handleEditProfile = () => {
-    // TODO: Open edit client dialog
-    console.log("Edit profile clicked");
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateClient = async (clientId: string, clientData: any) => {
+    try {
+      await dispatch(
+        updateClientDetails({ clientId, updates: clientData })
+      ).unwrap();
+      // Optionally show success message
+      console.log("Client updated successfully");
+    } catch (error) {
+      console.error("Failed to update client:", error);
+    }
   };
 
   const handleGoBack = () => {
@@ -290,6 +307,16 @@ export default function ClientProfilePage({ params }: ClientProfilePageProps) {
             </TabsContent>
           </Tabs>
         </>
+      )}
+
+      {/* Edit Client Dialog */}
+      {selectedClient && (
+        <EditClientDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onUpdateClient={handleUpdateClient}
+          client={selectedClient}
+        />
       )}
     </div>
   );

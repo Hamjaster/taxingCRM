@@ -73,9 +73,6 @@ export function ClientProfile() {
             </div>
           </div>
         </div>
-        <Button variant="outline" className="border-gray-300 text-gray-700">
-          Edit Profile
-        </Button>
       </div>
 
       {/* Contact Information Cards */}

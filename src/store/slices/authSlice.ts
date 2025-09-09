@@ -221,6 +221,33 @@ export const updateClientStatus = createAsyncThunk(
   }
 );
 
+// Async thunk for updating client details
+export const updateClientDetails = createAsyncThunk(
+  'auth/updateClientDetails',
+  async ({ clientId, updates }: { clientId: string; updates: any }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`/api/admin/clients/${clientId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(updates),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return rejectWithValue(data.message || data.error || 'Failed to update client details');
+      }
+
+      return { clientId, updatedClient: data.data };
+    } catch (error) {
+      return rejectWithValue('Network error occurred');
+    }
+  }
+);
+
 // Async thunk for sending OTP
 export const sendOTP = createAsyncThunk(
   'auth/sendOTP',
@@ -503,6 +530,32 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(updateClientStatus.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      // Update client details cases
+      .addCase(updateClientDetails.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateClientDetails.fulfilled, (state, action) => {
+        state.isLoading = false;
+        const { clientId, updatedClient } = action.payload;
+        
+        // Update in clients list
+        const clientIndex = state.clients.findIndex(client => client._id === clientId);
+        if (clientIndex !== -1) {
+          state.clients[clientIndex] = { ...state.clients[clientIndex], ...updatedClient };
+        }
+        
+        // Update selected client if it's the same client
+        if (state.selectedClient && state.selectedClient._id === clientId) {
+          state.selectedClient = { ...state.selectedClient, ...updatedClient };
+        }
+        
+        state.error = null;
+      })
+      .addCase(updateClientDetails.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })
