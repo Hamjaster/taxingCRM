@@ -21,7 +21,7 @@ export interface IAdmin extends Document {
   updatedAt: Date;
 }
 
-const AdminSchema = new Schema<IAdmin>({
+const AdminSchema = new Schema<IAdmin>({  
   email: {
     type: String,
     required: true,
@@ -89,4 +89,5 @@ const AdminSchema = new Schema<IAdmin>({
 AdminSchema.index({ email: 1 });
 AdminSchema.index({ employeeId: 1 });
 
-export default mongoose.models.Admin || mongoose.model<IAdmin>('Admin', AdminSchema);
+ const Admin = mongoose.models && "Admin" in mongoose.models ? mongoose.models.Admin : mongoose.model("Admin", AdminSchema);
+ export default Admin;
