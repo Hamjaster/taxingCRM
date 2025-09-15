@@ -423,11 +423,26 @@ export function ClientDocuments({ client }: ClientDocumentsProps) {
             isBordered
             title="Client Documents"
             clientId={client._id}
+            clientInfo={{
+              email: client.email,
+              firstName: client.firstName,
+              lastName: client.lastName,
+              businessName: client.businessName,
+            }}
           />
         </TabsContent>
 
         <TabsContent value="invoices">
-          <ClientInvoices clientId={client._id} />
+          <ClientInvoices
+            clientId={client._id}
+            clientInfo={{
+              email: client.email,
+              firstName: client.firstName,
+              lastName: client.lastName,
+              businessName: client.businessName,
+              entityName: client.entityName,
+            }}
+          />
         </TabsContent>
       </Tabs>
     </div>

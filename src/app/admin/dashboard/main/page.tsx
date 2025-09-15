@@ -4,11 +4,21 @@ import { TasksPendingSection } from "@/components/admin/tasks-pending-section";
 import { PendingTasksTable } from "@/components/admin/pending-tasks-table";
 import { useAppDispatch, useAppSelector } from "@/hooks/redux";
 import { fetchTasks } from "@/store/slices/taskSlice";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { redirect } from "next/navigation";
 
 export default function MainDashboard() {
   const { tasks } = useAppSelector((state) => state.tasks);
   const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state: any) => state.auth);
+
+  useEffect(() => {
+    if (user) {
+      const userId = user._id;
+    } else {
+      redirect("/admin/login"); // CHECK IT
+    }
+  }, []);
 
   useEffect(() => {
     dispatch(fetchTasks({}));

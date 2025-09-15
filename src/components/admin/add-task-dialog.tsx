@@ -31,7 +31,7 @@ import {
 import { Plus, Check, ChevronsUpDown } from "lucide-react";
 import { ReusableDialog } from "@/components/ui/reusable-dialog";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, createNotification } from "@/lib/utils";
 import {
   createTask,
   fetchTaskCategories,
@@ -40,6 +40,7 @@ import {
 } from "@/store/slices/taskSlice";
 import { fetchAdminClients } from "@/store/slices/authSlice";
 import type { ClientUser } from "@/types";
+import { typeOfNotification } from "@/contexts/useNotifications";
 
 interface AddTaskDialogProps {
   open: boolean;
@@ -83,7 +84,7 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isAddingCategory, setIsAddingCategory] = useState(false);
-
+  const { user } = useAppSelector((st) => st.auth);
   useEffect(() => {
     setActiveClients(() =>
       clients.filter((client) => client.status === "Active")
@@ -133,6 +134,30 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
     if (createTask.fulfilled.match(result)) {
       setFormData(initialFormData);
       onOpenChange(false);
+      if (!user?._id || !(selectedClient && selectedClient._id)) return;
+
+      // Prepare email data
+      const emailData = {
+        clientEmail: selectedClient.email,
+        clientName:
+          selectedClient.businessName ||
+          selectedClient.entityName ||
+          `${selectedClient.firstName} ${selectedClient.lastName}`,
+        adminName: `${user.firstName} ${user.lastName}`,
+        type: "TASK_CREATED" as const,
+        message: `${user?.firstName} (Admin) added a task`,
+        additionalData: {
+          taskTitle: formData.title,
+        },
+      };
+
+      createNotification({
+        receiverId: selectedClient._id,
+        senderId: user?._id,
+        type: typeOfNotification.TASK_CREATED,
+        message: `${user?.firstName} (Admin) added a task`,
+        emailData,
+      });
     }
   };
 

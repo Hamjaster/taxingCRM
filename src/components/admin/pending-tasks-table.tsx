@@ -29,6 +29,10 @@ import {
   clearError,
   Task,
 } from "@/store/slices/taskSlice";
+import { createNotification } from "@/lib/utils";
+import { typeOfNotification } from "@/contexts/useNotifications";
+import axios from "axios";
+import { current } from "@reduxjs/toolkit";
 
 export function PendingTasksTable({
   tasks,
@@ -42,6 +46,7 @@ export function PendingTasksTable({
   const { error, isUpdating, isDeleting, filters } = useAppSelector(
     (state) => state.tasks
   );
+  const { user } = useAppSelector((st) => st.auth);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [isViewNotesOpen, setIsViewNotesOpen] = useState(false);
@@ -61,6 +66,42 @@ export function PendingTasksTable({
         updates: { status: newStatus },
       })
     );
+    // get the current task by taskId from tasks
+    const currentTask = tasks.filter((t) => t._id === taskId)[0];
+
+    console.log("status changed", user, currentTask.clientId);
+    if (!user?._id || !currentTask.clientId) {
+      console.log("data missing");
+      return;
+    }
+
+    // Prepare email data if client information is available
+    const clientInfo = currentTask.clientId as any; // Assuming it's populated
+    const emailData = clientInfo?.email
+      ? {
+          clientEmail: clientInfo.email,
+          clientName:
+            clientInfo.businessName ||
+            clientInfo.entityName ||
+            `${clientInfo.firstName} ${clientInfo.lastName}`,
+          adminName: `${user.firstName} ${user.lastName}`,
+          type: "TASK_STATUS_UPDATED" as const,
+          message: `${user?.firstName} (Admin) updated project status to : ${newStatus}`,
+          additionalData: {
+            taskTitle: currentTask.title,
+            taskStatus: newStatus,
+          },
+        }
+      : undefined;
+
+    createNotification({
+      receiverId: currentTask.clientId._id as string,
+      senderId: user?._id,
+      type: typeOfNotification.TASK_CREATED,
+      message: `${user?.firstName} (Admin) updated project status to : ${newStatus}`,
+      emailData,
+    });
+    console.log("created a notification !!");
   };
 
   const handleDeleteTask = async (taskId: string) => {

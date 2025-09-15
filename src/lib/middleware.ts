@@ -21,8 +21,6 @@ export function getAuthUser(request: NextRequest): AuthUser | null {
 
 export function requireAuth(request: NextRequest): AuthUser {
   const user = getAuthUser(request);
-  console.log(request.headers, "HEADERS")
-  console.log(user, "USER GOT")
   if (!user) {
     throw new Error('Authentication required');
   }

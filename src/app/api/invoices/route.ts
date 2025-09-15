@@ -133,7 +133,9 @@ export async function POST(request: NextRequest) {
     const populatedInvoice = await Invoice.findById(invoice._id)
       .populate('clientId', 'firstName lastName email businessName entityName')
       .populate('assignedAdminId', 'firstName lastName email')
+      console.log('creaing a notification')
 
+      
     return NextResponse.json({ 
       invoice: populatedInvoice,
       message: 'Invoice created successfully' 

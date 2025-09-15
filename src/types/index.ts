@@ -430,3 +430,17 @@ export interface ChartDataType {
   individualClients: Array<{ month: string; value: number }>;
   entityFormation: Array<{ month: string; value: number }>;
 }
+
+export interface NotificationType  {
+  _id: string;
+  senderId?: string;       // who triggered this
+  senderModel?: "Client" | "Admin";         // sender type
+  recipientId: string;     // who will receive this
+  recipientModel: "Client" | "Admin";       // recipient type
+  type: "DOCUMENT" | "INVOICE" | "TASK" | "PROJECT_STATUS";
+  title: string;
+  message: string;
+  metadata?: Record<string, any>;
+  isRead: boolean;
+  createdAt: Date;
+}

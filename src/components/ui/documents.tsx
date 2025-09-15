@@ -47,6 +47,8 @@ import {
   setDownloadUrl,
 } from "@/store/slices/documentSlice";
 import { Client } from "@/types";
+import { createNotification } from "@/lib/utils";
+import { typeOfNotification } from "@/contexts/useNotifications";
 
 function getFileIcon(type: string) {
   switch (type) {
@@ -85,10 +87,17 @@ export function Documents({
   isBordered = false,
   title,
   clientId,
+  clientInfo,
 }: {
   isBordered: boolean;
   title: string;
   clientId?: string;
+  clientInfo?: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    businessName?: string;
+  };
 }) {
   const dispatch = useAppDispatch();
   const {
@@ -102,6 +111,7 @@ export function Documents({
     error,
     downloadUrl,
   } = useAppSelector((state) => state.documents);
+  const { user } = useAppSelector((st) => st.auth);
 
   // Dialog states
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
@@ -163,6 +173,32 @@ export function Documents({
       setIsUploadDialogOpen(false);
       setSelectedFile(null);
       setUploadDescription("");
+      if (!user?._id || !clientId) return;
+
+      // Prepare email data if client info is available
+      const emailData = clientInfo
+        ? {
+            clientEmail: clientInfo.email,
+            clientName:
+              clientInfo.businessName ||
+              `${clientInfo.firstName} ${clientInfo.lastName}`,
+            adminName: `${user.firstName} ${user.lastName}`,
+            type: "DOCUMENT_UPLOADED" as const,
+            message: `${user?.firstName} (Admin) uploaded a document in ${selectedFolder.name}`,
+            additionalData: {
+              documentName: selectedFile?.name,
+              folderName: selectedFolder.name,
+            },
+          }
+        : undefined;
+
+      createNotification({
+        receiverId: clientId,
+        senderId: user?._id,
+        type: typeOfNotification.DOCUMENT_UPLOADED,
+        message: `${user?.firstName} (Admin) uploaded a document in ${selectedFolder.name}`,
+        emailData,
+      });
     } catch (error) {
       // Error handled by Redux
     }

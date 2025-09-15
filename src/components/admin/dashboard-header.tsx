@@ -1,6 +1,13 @@
 "use client";
 
-import { Search, Bell, ChevronDown, User, LogOut, Settings } from "lucide-react";
+import {
+  Search,
+  Bell,
+  ChevronDown,
+  User,
+  LogOut,
+  Settings,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "../ui/sidebar";
@@ -14,22 +21,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
+import NotificationBell from "../ui/NotificationsBell";
 
 export function DashboardHeader() {
   const { user, logout } = useAuth();
 
   const getUserInitials = () => {
-    if (user && 'firstName' in user && 'lastName' in user) {
+    if (user && "firstName" in user && "lastName" in user) {
       return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`;
     }
-    return 'U';
+    return "U";
   };
 
   const getUserName = () => {
-    if (user && 'firstName' in user && 'lastName' in user) {
+    if (user && "firstName" in user && "lastName" in user) {
       return `${user.firstName} ${user.lastName}`;
     }
-    return 'User';
+    return "User";
   };
 
   return (
@@ -48,7 +56,7 @@ export function DashboardHeader() {
 
       <div className="w-1/2 flex items-center justify-end gap-4">
         <Button variant="ghost" size="icon" aria-label="Notifications">
-          <Bell className="h-4 w-4" />
+          {user && <NotificationBell userId={user._id} />}
         </Button>
 
         <Button variant="ghost" className="gap-2">
@@ -69,7 +77,9 @@ export function DashboardHeader() {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{getUserName()}</p>
+                <p className="text-sm font-medium leading-none">
+                  {getUserName()}
+                </p>
                 <p className="text-xs leading-none text-muted-foreground">
                   {user?.email}
                 </p>

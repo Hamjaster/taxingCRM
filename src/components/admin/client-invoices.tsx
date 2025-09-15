@@ -51,12 +51,20 @@ import {
   clearError,
   PopulatedInvoice,
 } from "@/store/slices/invoiceSlice";
-
+import { createNotification } from "@/lib/utils";
+import { typeOfNotification } from "@/contexts/useNotifications";
 interface ClientInvoicesProps {
   clientId: string;
+  clientInfo?: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    businessName?: string;
+    entityName?: string;
+  };
 }
 
-export function ClientInvoices({ clientId }: ClientInvoicesProps) {
+export function ClientInvoices({ clientId, clientInfo }: ClientInvoicesProps) {
   const dispatch = useAppDispatch();
   const {
     invoices,
@@ -72,6 +80,7 @@ export function ClientInvoices({ clientId }: ClientInvoicesProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] =
     useState<PopulatedInvoice | null>(null);
+  const { user } = useAppSelector((state) => state.auth);
 
   // Form data for create/edit invoice
   const [formData, setFormData] = useState<
@@ -104,6 +113,32 @@ export function ClientInvoices({ clientId }: ClientInvoicesProps) {
 
       setIsCreateDialogOpen(false);
       resetForm();
+      if (!user?._id) return;
+
+      // Prepare email data if client info is available
+      const emailData = clientInfo
+        ? {
+            clientEmail: clientInfo.email,
+            clientName:
+              clientInfo.businessName ||
+              clientInfo.entityName ||
+              `${clientInfo.firstName} ${clientInfo.lastName}`,
+            adminName: `${user.firstName} ${user.lastName}`,
+            type: "INVOICE_CREATED" as const,
+            message: `${user?.firstName} (Admin) created an invoice for ${formData.serviceName}`,
+            additionalData: {
+              invoiceAmount: formData.totalAmount,
+            },
+          }
+        : undefined;
+
+      createNotification({
+        receiverId: clientId,
+        senderId: user?._id,
+        type: typeOfNotification.INVOICE_CREATED,
+        message: `${user?.firstName} (Admin) created an invoice for ${formData.serviceName}`,
+        emailData,
+      });
     } catch (err) {
       // Error is handled by Redux slice
     }

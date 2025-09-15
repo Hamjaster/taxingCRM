@@ -42,6 +42,7 @@ export default function ClientProfilePage({ params }: ClientProfilePageProps) {
   );
   const [activeTab, setActiveTab] = useState("personal-info");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
   const router = useRouter();
   useEffect(() => {
     if (params.id) {
