@@ -4,7 +4,7 @@ frontend:
     preBuild:
       commands:
         - echo "Installing dependencies..."
-        - npm ci
+        - npm install --legacy-peer-deps
     build:
       commands:
         - echo "Building the Next.js application..."
