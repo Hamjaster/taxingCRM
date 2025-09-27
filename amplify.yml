@@ -7,6 +7,8 @@ frontend:
         - npm install --legacy-peer-deps
     build:
       commands:
+        - echo "Setting environment variables..."
+        - env | grep -e TESTING -e MONGODB_URI >> .env.production
         - echo "Building the Next.js application..."
         - npm run build
   artifacts:
