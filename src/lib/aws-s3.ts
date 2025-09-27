@@ -4,19 +4,19 @@ import { env } from 'process';
 import * as Minio from 'minio'
 // AWS S3 Configuration
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'us-east-1',
+  region: process.env.AUS_REGION || 'us-east-1',
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+    accessKeyId: process.env.AUS_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.AUS_SECRET_ACCESS_KEY || '',
   },
 });
 
-const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME || 'taxing-crm-documents';
+const BUCKET_NAME = process.env.AUS_S3_BUCKET_NAME || 'taxing-crm-documents';
 
 // export const s3ClientMinio = new Minio.Client({
 //   endPoint: env.S3_ENDPOINT,
-//   accessKey: process.env.AWS_ACCESS_KEY_ID,
-//   secretKey: process.env.AWS_SECRET_ACCESS_KEY,
+//   accessKey: process.env.AUS_ACCESS_KEY_ID,
+//   secretKey: process.env.AUS_SECRET_ACCESS_KEY,
 //   useSSL: env.S3_USE_SSL === 'true',
 // })
 
@@ -67,7 +67,7 @@ export async function uploadFileToS3(options: UploadOptions): Promise<UploadResu
     const response = await s3Client.send(command);
     
     const url = isPublic 
-      ? `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${key}`
+      ? `https://${BUCKET_NAME}.s3.${process.env.AUS_REGION || 'us-east-1'}.amazonaws.com/${key}`
       : await getSignedUrl(s3Client, new GetObjectCommand({ Bucket: BUCKET_NAME, Key: key }), { expiresIn: 3600 });
 
     return {
