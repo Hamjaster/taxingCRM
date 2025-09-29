@@ -42,7 +42,7 @@ export interface UploadOptions {
  */
 export async function uploadFileToS3(options: UploadOptions): Promise<UploadResult> {
   const { clientId, folderId, originalName, contentType, buffer, isPublic = false } = options;
-  
+  console.log(process.env.AUS_REGION, process.env.AUS_ACCESS_KEY_ID, process.env.AUS_SECRET_ACCESS_KEY, process.env.AUS_S3_BUCKET_NAME, "ALL THE ENVS !!")
   // Generate unique key for the file
   const timestamp = Date.now();
   const randomString = Math.random().toString(36).substring(2, 15);
@@ -65,7 +65,7 @@ export async function uploadFileToS3(options: UploadOptions): Promise<UploadResu
 
   try {
     const response = await s3Client.send(command);
-    
+    console.log(process.env.AUS_REGION)
     const url = isPublic 
       ? `https://${BUCKET_NAME}.s3.${process.env.AUS_REGION || 'us-east-1'}.amazonaws.com/${key}`
       : await getSignedUrl(s3Client, new GetObjectCommand({ Bucket: BUCKET_NAME, Key: key }), { expiresIn: 3600 });
