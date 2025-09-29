@@ -77,8 +77,8 @@ export default function NotificationBell({ userId }: { userId: string }) {
       }
 
       // Navigate to appropriate page
-      const path = getNotificationPath(notification.type, notification.id);
-      router.push(path);
+      // const path = getNotificationPath(notification.type, notification.id);
+      // router.push(path);
       setIsOpen(false);
     } catch (error) {
       console.error("Error updating notification:", error);
