@@ -2,6 +2,9 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 
+// Get API URL from environment
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
 interface ChartDataPoint {
   month: string;
   value: number;
@@ -61,7 +64,7 @@ export const fetchClientStats = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('/api/admin/clients/stats', {
+      const response = await axios.get(`${API_URL}/api/admin/clients/stats`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,

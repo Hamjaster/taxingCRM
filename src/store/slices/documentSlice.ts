@@ -1,5 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
+// Get API URL from environment
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
 // Types for documents and folders
 export interface DocumentItem {
   _id: string;
@@ -163,7 +166,7 @@ export const fetchFolders = createAsyncThunk(
   async (clientId?: string, { rejectWithValue }) => {
     try {
       const params = clientId ? `?clientId=${clientId}` : '';
-      const response = await fetch(`/api/folders${params}`, {
+      const response = await fetch(`${API_URL}/api/folders${params}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
@@ -187,7 +190,7 @@ export const fetchFolderWithDocuments = createAsyncThunk(
   'documents/fetchFolderWithDocuments',
   async (folderId: string, { rejectWithValue }) => {
     try {
-      const response = await fetch(`/api/folders/${folderId}`, {
+      const response = await fetch(`${API_URL}/api/folders/${folderId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
@@ -211,7 +214,7 @@ export const createFolder = createAsyncThunk(
   'documents/createFolder',
   async (folderData: CreateFolderData, { rejectWithValue }) => {
     try {
-      const response = await fetch('/api/folders', {
+      const response = await fetch(`${API_URL}/api/folders`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -240,7 +243,7 @@ export const updateFolder = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await fetch(`/api/folders/${folderId}`, {
+      const response = await fetch(`${API_URL}/api/folders/${folderId}`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -266,7 +269,7 @@ export const deleteFolder = createAsyncThunk(
   'documents/deleteFolder',
   async (folderId: string, { rejectWithValue }) => {
     try {
-      const response = await fetch(`/api/folders/${folderId}`, {
+      const response = await fetch(`${API_URL}/api/folders/${folderId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -298,7 +301,7 @@ export const uploadDocument = createAsyncThunk(
         formData.append('description', uploadData.description);
       }
 
-      const response = await fetch('/api/documents/upload', {
+      const response = await fetch(`${API_URL}/api/documents/upload`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -326,7 +329,7 @@ export const updateDocument = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await fetch(`/api/documents/${documentId}`, {
+      const response = await fetch(`${API_URL}/api/documents/${documentId}`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -352,7 +355,7 @@ export const deleteDocument = createAsyncThunk(
   'documents/deleteDocument',
   async (documentId: string, { rejectWithValue }) => {
     try {
-      const response = await fetch(`/api/documents/${documentId}`, {
+      const response = await fetch(`${API_URL}/api/documents/${documentId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -376,7 +379,7 @@ export const downloadDocument = createAsyncThunk(
   'documents/downloadDocument',
   async (documentId: string, { rejectWithValue }) => {
     try {
-      const response = await fetch(`/api/documents/${documentId}/download`, {
+      const response = await fetch(`${API_URL}/api/documents/${documentId}/download`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },

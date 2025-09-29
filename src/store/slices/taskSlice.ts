@@ -1,5 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
+// Get API URL from environment
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
 // Types
 export interface Task {
   _id: string;
@@ -132,7 +135,7 @@ export const fetchTasks = createAsyncThunk(
         }
       });
 
-      const response = await fetch(`/api/tasks?${params.toString()}`, {
+      const response = await fetch(`${API_URL}/api/tasks?${params.toString()}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
@@ -155,7 +158,7 @@ export const fetchTaskById = createAsyncThunk(
   'tasks/fetchTaskById',
   async (taskId: string, { rejectWithValue }) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
+      const response = await fetch(`${API_URL}/api/tasks/${taskId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
@@ -178,7 +181,7 @@ export const createTask = createAsyncThunk(
   'tasks/createTask',
   async (taskData: CreateTaskData, { rejectWithValue }) => {
     try {
-      const response = await fetch('/api/tasks', {
+      const response = await fetch(`${API_URL}/api/tasks`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -204,7 +207,7 @@ export const updateTask = createAsyncThunk(
   'tasks/updateTask',
   async ({ taskId, updates }: { taskId: string; updates: UpdateTaskData }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
+      const response = await fetch(`${API_URL}/api/tasks/${taskId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -230,7 +233,7 @@ export const deleteTask = createAsyncThunk(
   'tasks/deleteTask',
   async (taskId: string, { rejectWithValue }) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
+      const response = await fetch(`${API_URL}/api/tasks/${taskId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -254,7 +257,7 @@ export const fetchTaskCategories = createAsyncThunk(
   'tasks/fetchTaskCategories',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch('/api/task-categories', {
+      const response = await fetch(`${API_URL}/api/task-categories`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
@@ -277,7 +280,7 @@ export const createTaskCategory = createAsyncThunk(
   'tasks/createTaskCategory',
   async ({ name, description }: { name: string; description?: string }, { rejectWithValue }) => {
     try {
-      const response = await fetch('/api/task-categories', {
+      const response = await fetch(`${API_URL}/api/task-categories`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

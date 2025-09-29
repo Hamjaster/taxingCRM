@@ -1,6 +1,9 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Admin, ClientUser } from '@/types';
 
+// Get API URL from environment
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
 // Define the auth state interface
 export interface AuthState {
   user: Admin | ClientUser | null;
@@ -46,7 +49,7 @@ export const loginUser = createAsyncThunk(
     try {
       const endpoint = credentials.userType === 'client' ? '/api/client/login' : '/api/admin/login';
       
-      const response = await fetch(endpoint, {
+      const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -90,7 +93,7 @@ export const registerUser = createAsyncThunk(
     assignedAdminId?: string; // For client registration
   }, { rejectWithValue }) => {
     try {
-      const response = await fetch('/api/admin/register', {
+      const response = await fetch(`${API_URL}/api/admin/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -117,7 +120,7 @@ export const fetchAdminClients = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       // send bearer token in authorization header
-      const response = await fetch('/api/admin/clients', {
+      const response = await fetch(`${API_URL}/api/admin/clients`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
@@ -149,7 +152,7 @@ export const fetchClientById = createAsyncThunk(
   'auth/fetchClientById',
   async (clientId: string, { rejectWithValue }) => {
     try {
-      const response = await fetch(`/api/admin/clients/${clientId}`, {
+      const response = await fetch(`${API_URL}/api/admin/clients/${clientId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
@@ -172,7 +175,7 @@ export const createClient = createAsyncThunk(
   'auth/createClient',
   async (clientData: any, { rejectWithValue }) => {
     try {
-      const response = await fetch('/api/admin/clients', {
+      const response = await fetch(`${API_URL}/api/admin/clients`, {
         method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -199,7 +202,7 @@ export const updateClientStatus = createAsyncThunk(
   'auth/updateClientStatus',
   async ({ clientId, status }: { clientId: string; status: 'Active' | 'Inactive' }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`/api/admin/clients/${clientId}`, {
+      const response = await fetch(`${API_URL}/api/admin/clients/${clientId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'  ,
@@ -226,7 +229,7 @@ export const updateClientDetails = createAsyncThunk(
   'auth/updateClientDetails',
   async ({ clientId, updates }: { clientId: string; updates: any }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`/api/admin/clients/${clientId}`, {
+      const response = await fetch(`${API_URL}/api/admin/clients/${clientId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -253,7 +256,7 @@ export const sendOTP = createAsyncThunk(
   'auth/sendOTP',
   async (email: string, { rejectWithValue }) => {
     try {
-      const response = await fetch('/api/auth/send-otp', {
+      const response = await fetch(`${API_URL}/api/auth/send-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -279,7 +282,7 @@ export const verifyOTP = createAsyncThunk(
   'auth/verifyOTP',
   async ({ email, otp }: { email: string; otp: string }, { rejectWithValue }) => {
     try {
-      const response = await fetch('/api/auth/verify-otp', {
+      const response = await fetch(`${API_URL}/api/auth/verify-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -311,7 +314,7 @@ export const checkAuthStatus = createAsyncThunk(
         return rejectWithValue('No token found');
       }
 
-      const response = await fetch('/api/auth/me', {
+      const response = await fetch(`${API_URL}/api/auth/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -346,7 +349,7 @@ export const logoutUser = createAsyncThunk(
   'auth/logoutUser',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch('/api/auth/logout', {
+      const response = await fetch(`${API_URL}/api/auth/logout`, {
         method: 'POST',
       });
 

@@ -1,6 +1,9 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Invoice, InvoiceStatus, CreateInvoiceData, UpdateInvoiceData } from '@/types';
 
+// Get API URL from environment
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
 // Extended Invoice type for populated data from API
 export interface PopulatedInvoice extends Invoice {
   client?: {
@@ -92,7 +95,7 @@ export const fetchInvoices = createAsyncThunk(
         }
       });
 
-      const response = await fetch(`/api/invoices?${params.toString()}`, {
+      const response = await fetch(`${API_URL}/api/invoices?${params.toString()}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
@@ -116,7 +119,7 @@ export const fetchInvoiceById = createAsyncThunk(
   'invoices/fetchInvoiceById',
   async (invoiceId: string, { rejectWithValue }) => {
     try {
-      const response = await fetch(`/api/invoices/${invoiceId}`, {
+      const response = await fetch(`${API_URL}/api/invoices/${invoiceId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
@@ -140,7 +143,7 @@ export const createInvoice = createAsyncThunk(
   'invoices/createInvoice',
   async (invoiceData: CreateInvoiceData, { rejectWithValue }) => {
     try {
-      const response = await fetch('/api/invoices', {
+      const response = await fetch(`${API_URL}/api/invoices`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -169,7 +172,7 @@ export const updateInvoice = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await fetch(`/api/invoices/${invoiceId}`, {
+      const response = await fetch(`${API_URL}/api/invoices/${invoiceId}`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -195,7 +198,7 @@ export const deleteInvoice = createAsyncThunk(
   'invoices/deleteInvoice',
   async (invoiceId: string, { rejectWithValue }) => {
     try {
-      const response = await fetch(`/api/invoices/${invoiceId}`, {
+      const response = await fetch(`${API_URL}/api/invoices/${invoiceId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -220,7 +223,7 @@ export const fetchClientInvoices = createAsyncThunk(
   'invoices/fetchClientInvoices',
   async (clientId: string, { rejectWithValue }) => {
     try {
-      const response = await fetch(`/api/invoices?clientId=${clientId}`, {
+      const response = await fetch(`${API_URL}/api/invoices?clientId=${clientId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
@@ -248,7 +251,7 @@ export const updateInvoiceStatus = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await fetch(`/api/invoices/${invoiceId}`, {
+      const response = await fetch(`${API_URL}/api/invoices/${invoiceId}`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -286,7 +289,7 @@ export const recordPayment = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await fetch(`/api/invoices/${invoiceId}`, {
+      const response = await fetch(`${API_URL}/api/invoices/${invoiceId}`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
