@@ -10,6 +10,7 @@ export function middleware(request: NextRequest) {
       'http://localhost:3000',
       'http://localhost:3001',
       'http://localhost:8080',
+      'https://totportal.us',
       process.env.NEXT_PUBLIC_API_URL, // Replace with your production domain
     ];
 
