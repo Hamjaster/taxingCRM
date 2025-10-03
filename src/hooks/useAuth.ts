@@ -1,11 +1,19 @@
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from './redux';
 import { logoutUser, clearAuth } from '@/store/slices/authSlice';
+import { useTokenExpiry } from './useTokenExpiry';
 
 export const useAuth = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const authState = useAppSelector((state) => state.auth);
+
+  // Start token expiry checking when user is authenticated
+  
+  useTokenExpiry({
+    checkInterval: 30000, // Check every 30 seconds
+    autoLogout: true,
+  });
 
   const logout = async () => {
     try {

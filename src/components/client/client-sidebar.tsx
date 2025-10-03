@@ -162,7 +162,7 @@ export function ClientSidebar() {
               <DropdownMenuTrigger asChild>
                 <button className="flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-gray-50 transition-colors group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={"/placeholder.svg?height=32&width=32"} />
+                    <AvatarImage src={user?.avatar || ""} />
                     <AvatarFallback>{getUserInitials()}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-1 flex-col group-data-[collapsible=icon]:hidden">
@@ -184,7 +184,7 @@ export function ClientSidebar() {
               >
                 <div className="flex items-center gap-3 p-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={"/placeholder.svg?height=32&width=32"} />
+                    <AvatarImage src={user?.avatar || ""} />
                     <AvatarFallback>{getUserInitials()}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">

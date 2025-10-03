@@ -920,20 +920,6 @@ export function EditClientDialog({
               <Upload className="h-6 w-6 text-gray-400" />
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1">
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">
-                <span className="font-medium text-gray-900">
-                  Click to upload
-                </span>{" "}
-                or drag and drop
-              </p>
-              <p className="text-xs text-gray-500">
-                SVG, PNG, JPG or GIF (max. 800x400px)
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>

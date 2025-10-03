@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvatarUpload } from "@/components/ui/avatar-upload";
 import { X, Plus, Upload } from "lucide-react";
 import { Client } from "@/types";
 
@@ -346,6 +347,7 @@ export function CreateClientDialog({
         zipCode: formData.zipCode,
         notes: formData.notes,
         status: formData.status,
+        avatar: formData.profileImage, // Add avatar support for business
       };
     } else if (formData.clientType === "Entity") {
       newClient = {
@@ -375,6 +377,7 @@ export function CreateClientDialog({
         publicationDetails: formData.publicationDetails,
         notes: formData.notes,
         status: formData.status,
+        avatar: formData.profileImage, // Add avatar support for entity
       };
     } else {
       newClient = {
@@ -389,6 +392,7 @@ export function CreateClientDialog({
         // Additional individual fields
         mi: formData.mi,
         dateOfBirth: formData.dateOfBirth,
+        avatar: formData.profileImage, // Use profileImage as avatar
         profileImage: formData.profileImage,
         spouseFirstName: formData.spouseFirstName,
         spouseMi: formData.spouseMi,
@@ -650,6 +654,25 @@ export function CreateClientDialog({
           </div>
         </div>
       </div>
+
+      {/* Business Profile Section */}
+      <div className="border-t pt-4">
+        <h4 className="text-md font-semibold text-gray-900 mb-4">
+          Business Profile
+        </h4>
+        <p className="text-sm text-gray-500 mb-2">
+          Upload a profile picture for the business. This will be visible in the
+          client portal.
+        </p>
+        <AvatarUpload
+          currentAvatar={formData.profileImage}
+          onAvatarChange={(avatarUrl) =>
+            updateFormData("profileImage", avatarUrl)
+          }
+          size="md"
+          showRemoveButton={true}
+        />
+      </div>
     </div>
   );
 
@@ -899,28 +922,18 @@ export function CreateClientDialog({
 
       <div className="space-y-2">
         <Label>Client Profile</Label>
-        <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16">
-            <AvatarImage src={formData.profileImage || "/placeholder.svg"} />
-            <AvatarFallback className="bg-gray-100">
-              <Upload className="h-6 w-6 text-gray-400" />
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">
-                <span className="font-medium text-gray-900">
-                  Click to upload
-                </span>{" "}
-                or drag and drop
-              </p>
-              <p className="text-xs text-gray-500">
-                SVG, PNG, JPG or GIF (max. 800x400px)
-              </p>
-            </div>
-          </div>
-        </div>
+        <p className="text-sm text-gray-500 mb-2">
+          Upload a profile picture for the client. This will be visible in their
+          portal.
+        </p>
+        <AvatarUpload
+          currentAvatar={formData.profileImage}
+          onAvatarChange={(avatarUrl) =>
+            updateFormData("profileImage", avatarUrl)
+          }
+          size="md"
+          showRemoveButton={true}
+        />
       </div>
     </div>
   );
@@ -1338,6 +1351,25 @@ export function CreateClientDialog({
             />
           </div>
         </div>
+      </div>
+
+      {/* Entity Profile Section */}
+      <div className="border-t pt-4">
+        <h4 className="text-md font-semibold text-gray-900 mb-4">
+          Entity Profile
+        </h4>
+        <p className="text-sm text-gray-500 mb-2">
+          Upload a profile picture for the entity. This will be visible in the
+          client portal.
+        </p>
+        <AvatarUpload
+          currentAvatar={formData.profileImage}
+          onAvatarChange={(avatarUrl) =>
+            updateFormData("profileImage", avatarUrl)
+          }
+          size="md"
+          showRemoveButton={true}
+        />
       </div>
     </div>
   );

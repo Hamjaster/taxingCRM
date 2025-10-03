@@ -128,6 +128,10 @@ export const fetchAdminClients = createAsyncThunk(
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          return rejectWithValue('Session expired. Please login again.');
+        }
         return rejectWithValue(data.message || data.error || 'Failed to fetch clients');
       }
 
@@ -323,7 +327,8 @@ export const checkAuthStatus = createAsyncThunk(
       if (!response.ok) {
         // Clear invalid token
         localStorage.removeItem('token');
-        return rejectWithValue('Authentication failed');
+        const errorMessage = response.status === 401 ? 'Session expired. Please login again.' : 'Authentication failed';
+        return rejectWithValue(errorMessage);
       }
 
       const userData = await response.json();
