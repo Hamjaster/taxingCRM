@@ -434,21 +434,30 @@ export function ClientInvoices({ clientId, clientInfo }: ClientInvoicesProps) {
               <Label htmlFor="subtotal" className="text-right">
                 Amount *
               </Label>
-              <Input
-                id="subtotal"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.totalAmount}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    totalAmount: parseFloat(e.target.value) || 0,
-                  })
-                }
-                className="col-span-3"
-                placeholder="0.00"
-              />
+              <div className="col-span-3 relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                  $
+                </span>
+                <Input
+                  id="subtotal"
+                  type="text"
+                  value={
+                    formData.totalAmount !== undefined &&
+                    formData.totalAmount > 0
+                      ? formData.totalAmount.toString()
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9.]/g, "");
+                    setFormData({
+                      ...formData,
+                      totalAmount: parseFloat(value) || 0,
+                    });
+                  }}
+                  className="pl-8"
+                  placeholder="0.00"
+                />
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="dueDate" className="text-right">
@@ -528,20 +537,30 @@ export function ClientInvoices({ clientId, clientInfo }: ClientInvoicesProps) {
               <Label htmlFor="editSubtotal" className="text-right">
                 Amount *
               </Label>
-              <Input
-                id="editSubtotal"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.totalAmount}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    totalAmount: parseFloat(e.target.value) || 0,
-                  })
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3 relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                  $
+                </span>
+                <Input
+                  id="editSubtotal"
+                  type="text"
+                  value={
+                    formData.totalAmount !== undefined &&
+                    formData.totalAmount > 0
+                      ? formData.totalAmount.toString()
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9.]/g, "");
+                    setFormData({
+                      ...formData,
+                      totalAmount: parseFloat(value) || 0,
+                    });
+                  }}
+                  className="pl-8"
+                  placeholder="0.00"
+                />
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="editDueDate" className="text-right">

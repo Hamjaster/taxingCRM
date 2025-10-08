@@ -666,9 +666,10 @@ export function CreateClientDialog({
         </p>
         <AvatarUpload
           currentAvatar={formData.profileImage}
-          onAvatarChange={(avatarUrl) =>
-            updateFormData("profileImage", avatarUrl)
-          }
+          onAvatarChange={(avatarUrl) => {
+            console.log(avatarUrl, "avatar url !");
+            updateFormData("profileImage", avatarUrl);
+          }}
           size="md"
           showRemoveButton={true}
         />

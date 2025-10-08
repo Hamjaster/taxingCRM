@@ -1,78 +1,69 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/middleware';
-import { uploadFileToS3, validateFile } from '@/lib/aws-s3';
+import { uploadImageToCloudinary } from '@/lib/cloudinary';
 
 export async function POST(request: NextRequest) {
   try {
-    const user = requireAuth(request);
-    
-    // Only admins can upload images
-    if (user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      );
-    }
-
     const formData = await request.formData();
-    const file = formData.get('file') as File;
-    const uploadType = formData.get('type') as string || 'general'; // 'general', 'avatar', etc.
+    const file = formData.get('image') as File;
 
     if (!file) {
       return NextResponse.json(
-        { error: 'No file provided' },
+        { error: 'No image file provided' },
         { status: 400 }
       );
     }
 
-    // Validate file
-    try {
-      validateFile({
-        originalname: file.name,
-        size: file.size,
-        mimetype: file.type,
-      });
-    } catch (validationError) {
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: validationError instanceof Error ? validationError.message : 'Invalid file' },
+        { error: 'Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.' },
+        { status: 400 }
+      );
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      return NextResponse.json(
+        { error: 'File size too large. Maximum size is 5MB.' },
         { status: 400 }
       );
     }
 
     // Convert file to buffer
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
 
-    // Generate a temporary client ID for upload organization
-    const tempClientId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-
-    // Upload to S3 with a specific path based on upload type
-    const uploadResult = await uploadFileToS3({
-      clientId: tempClientId,
-      folderId: uploadType === 'avatar' ? 'avatars' : 'uploads',
-      originalName: file.name,
-      contentType: file.type,
-      buffer,
-      isPublic: true, // Make images publicly accessible
+    // Upload to Cloudinary
+    const uploadResult = await uploadImageToCloudinary(buffer, {
+      folder: 'taxingcrm/client-profiles',
+      transformation: {
+        width: 400,
+        height: 400,
+        crop: 'fill',
+        gravity: 'face',
+        quality: 'auto',
+        fetch_format: 'auto',
+      },
     });
 
-    return NextResponse.json({ 
-      url: uploadResult.url,
-      key: uploadResult.key,
-      message: 'Image uploaded successfully' 
-    }, { status: 200 });
+    return NextResponse.json({
+      success: true,
+      data: {
+        url: uploadResult.secure_url,
+        public_id: uploadResult.public_id,
+        width: uploadResult.width,
+        height: uploadResult.height,
+        format: uploadResult.format,
+        bytes: uploadResult.bytes,
+      },
+    });
 
   } catch (error) {
-    console.error('Upload image error:', error);
-    
-    if (error instanceof Error && error.message.includes('required')) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 401 }
-      );
-    }
-
+    console.error('Image upload error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to upload image' },
       { status: 500 }
     );
   }

@@ -135,6 +135,7 @@ interface DocumentState {
   isUploadingDocument: boolean;
   isUpdatingDocument: boolean;
   isDeletingDocument: boolean;
+  isDownloadingDocument: boolean;
   error: string | null;
   uploadProgress: number;
   downloadUrl: string | null;
@@ -154,6 +155,7 @@ const initialState: DocumentState = {
   isUploadingDocument: false,
   isUpdatingDocument: false,
   isDeletingDocument: false,
+  isDownloadingDocument: false,
   error: null,
   uploadProgress: 0,
   downloadUrl: null,
@@ -392,6 +394,7 @@ export const downloadDocument = createAsyncThunk(
       }
      
       return data;
+      console.log("data", data);
     } catch (error) {
       return rejectWithValue('Network error occurred');
     }
@@ -598,13 +601,16 @@ const documentSlice = createSlice({
       
       // Download document
       .addCase(downloadDocument.pending, (state) => {
+        state.isDownloadingDocument = true;
         state.error = null;
       })
       .addCase(downloadDocument.fulfilled, (state, action) => {
         state.downloadUrl = action.payload.downloadUrl;
+        state.isDownloadingDocument = false;
         state.error = null;
       })
       .addCase(downloadDocument.rejected, (state, action) => {
+        state.isDownloadingDocument = false;
         state.error = action.payload as string;
       });
   },

@@ -107,6 +107,7 @@ export async function getDownloadUrl(key: string, expiresIn: number = 3600): Pro
   const command = new GetObjectCommand({
     Bucket: BUCKET_NAME,
     Key: key,
+    ResponseContentDisposition: `attachment; filename="${key}"`,
   });
 
   try {

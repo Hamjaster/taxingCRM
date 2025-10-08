@@ -40,7 +40,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     // Handle authentication failure - redirect to login
     if (error && !isAuthenticated && !isLoading) {
       console.log("Authentication failed, redirecting to login...");
-      router.push("/client/login");
+      router.push("/customer/login");
     }
   }, [error, isAuthenticated, isLoading, router]);
 

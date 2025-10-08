@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Client from '@/models/Client';
 import { requireAuth } from '@/lib/middleware';
-import { uploadFileToS3, validateFile } from '@/lib/aws-s3';
+import { uploadImageToCloudinary, deleteImageFromCloudinary, extractPublicIdFromUrl } from '@/lib/cloudinary';
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,16 +35,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file
-    try {
-      validateFile({
-        originalname: file.name,
-        size: file.size,
-        mimetype: file.type,
-      });
-    } catch (validationError) {
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: validationError instanceof Error ? validationError.message : 'Invalid file' },
+        { error: 'Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.' },
+        { status: 400 }
+      );
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      return NextResponse.json(
+        { error: 'File size too large. Maximum size is 5MB.' },
         { status: 400 }
       );
     }
@@ -65,26 +69,29 @@ export async function POST(request: NextRequest) {
     // Convert file to buffer
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // Upload to S3 with a specific path for avatars
-    const uploadResult = await uploadFileToS3({
-      clientId,
-      folderId: 'avatars', // Special folder for avatars
-      originalName: file.name,
-      contentType: file.type,
-      buffer,
-      isPublic: true, // Make avatars publicly accessible
+    // Upload to Cloudinary
+    const uploadResult = await uploadImageToCloudinary(buffer, {
+      folder: `taxingcrm/clients/${clientId}/avatars`,
+      transformation: {
+        width: 400,
+        height: 400,
+        crop: 'fill',
+        gravity: 'face',
+        quality: 'auto',
+        fetch_format: 'auto',
+      },
     });
 
     // Update client with avatar URL
     const updatedClient = await Client.findByIdAndUpdate(
       clientId,
-      { avatar: uploadResult.url },
+      { avatar: uploadResult.secure_url },
       { new: true }
     ).select('-password');
 
     return NextResponse.json({ 
       client: updatedClient,
-      avatarUrl: uploadResult.url,
+      avatarUrl: uploadResult.secure_url,
       message: 'Avatar uploaded successfully' 
     }, { status: 200 });
 
@@ -139,6 +146,20 @@ export async function DELETE(request: NextRequest) {
         { error: 'Client not found' },
         { status: 404 }
       );
+    }
+
+    // Get current avatar URL to delete from Cloudinary
+    const currentClient = await Client.findById(clientId);
+    if (currentClient?.avatar) {
+      const publicId = extractPublicIdFromUrl(currentClient.avatar);
+      if (publicId) {
+        try {
+          await deleteImageFromCloudinary(publicId);
+        } catch (deleteError) {
+          console.error('Failed to delete image from Cloudinary:', deleteError);
+          // Continue with database update even if Cloudinary deletion fails
+        }
+      }
     }
 
     // Remove avatar from client

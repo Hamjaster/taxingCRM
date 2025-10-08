@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Client from '@/models/Client';
+import Admin from '@/models/Admin';
 import { verifyOTP } from '@/lib/otp';
 import { generateJWT } from '@/lib/auth';
 
@@ -9,7 +10,7 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     const body = await request.json();
-    const { email, otp } = body;
+    const { email, otp, userType } = body;
 
     // Validate required fields
     if (!email || !otp) {
@@ -33,18 +34,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find client by email
-    const client = await Client.findOne({ email: email.toLowerCase() });
+    // Find user by email and type
+    let user;
+    let role;
+    
+    if (userType === 'admin') {
+      user = await Admin.findOne({ email: email.toLowerCase() });
+      role = 'admin';
+    } else {
+      user = await Client.findOne({ email: email.toLowerCase() });
+      role = 'client';
+    }
+    console.log(user, "USER FOUND !")
 
-    if (!client) {
+    if (!user) {
       return NextResponse.json(
-        { success: false, message: 'Client not found' },
+        { success: false, message: `${userType === 'admin' ? 'Admin' : 'Client'} not found` },
         { status: 404 }
       );
     }
 
-    // Check if client is active
-    if (client.status !== 'Active') {
+    // Check if user is active
+    if (user.status !== 'Active' && userType === 'client') {
       return NextResponse.json(
         { success: false, message: 'Account is deactivated. Please contact your administrator.' },
         { status: 401 }
@@ -52,24 +63,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Update last login and email verification status
-    client.lastLogin = new Date();
-    client.isEmailVerified = true;
-    await client.save();
+    user.lastLogin = new Date();
+    if (userType === 'client') {
+      user.isEmailVerified = true;
+    }
+    await user.save();
 
-    // Generate JWT token for client
+    // Generate JWT token
     const token = generateJWT({
-      id: client._id.toString(),
-      role: "client",
+      id: user._id.toString(),
+      role: role,
     });
 
     // Remove sensitive information before sending response
-    const clientData = client.toObject();
-    delete clientData.password;
+    const userData = user.toObject();
+    delete userData.password;
 
-    // Create response with client data
+    // Create response with user data
     const response = NextResponse.json({
       message: 'OTP verified successfully. Login completed.',
-      data: { ...clientData, token },
+      data: { ...userData, token },
       success: true,
     });
 

@@ -21,6 +21,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { X, Plus, Upload } from "lucide-react";
 import { ClientUser } from "@/types";
+import { AvatarUpload } from "../ui/avatar-upload";
 
 interface EditClientDialogProps {
   open: boolean;
@@ -221,7 +222,7 @@ export function EditClientDialog({
         phoneNo: client.phone || "",
         email: client.email || "",
         status: client.status || "Active",
-        profileImage: client.avatar || "",
+        profileImage: client.profileImage || "",
         spouseFirstName: client.spouseFirstName || "",
         spouseMi: client.spouseMi || "",
         spouseLastName: client.spouseLastName || "",
@@ -421,6 +422,7 @@ export function EditClientDialog({
         zipCode: formData.zipCode,
         notes: formData.notes,
         status: formData.status,
+        profileImage: formData.profileImage,
       };
     } else if (formData.clientType === "Entity") {
       updatedClient = {
@@ -449,6 +451,7 @@ export function EditClientDialog({
         publicationDetails: formData.publicationDetails,
         notes: formData.notes,
         status: formData.status,
+        profileImage: formData.profileImage,
       };
     } else {
       updatedClient = {
@@ -913,14 +916,17 @@ export function EditClientDialog({
 
       <div className="space-y-2">
         <Label>Client Profile</Label>
-        <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16">
-            <AvatarImage src={formData.profileImage || "/placeholder.svg"} />
-            <AvatarFallback className="bg-gray-100">
-              <Upload className="h-6 w-6 text-gray-400" />
-            </AvatarFallback>
-          </Avatar>
-        </div>
+        {client && (
+          <AvatarUpload
+            currentAvatar={formData.profileImage}
+            onAvatarChange={(avatarUrl) => {
+              console.log(avatarUrl, "avatar url !");
+              updateFormData("profileImage", avatarUrl);
+            }}
+            size="md"
+            showRemoveButton={true}
+          />
+        )}
       </div>
     </div>
   );

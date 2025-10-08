@@ -1,3 +1,4 @@
+import { uploadImageCloudinary } from '@/lib/cloudinary';
 import { useState } from 'react';
 
 interface UseAvatarUploadOptions {
@@ -9,50 +10,34 @@ export const useAvatarUpload = (options: UseAvatarUploadOptions = {}) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  const uploadImage = async (file: File, uploadType: string = 'avatar') => {
+  const uploadImage = async (file: File, uploadType: string = 'avatar') : Promise<string| null>  => {
+    console.log('UPLOADING IMAGE !');
     if (!file) {
       options.onError?.('File is required');
-      return;
+      return null;
     }
 
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
       options.onError?.('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
-      return;
+      return null;
     }
 
     // Validate file size (5MB max)
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
       options.onError?.('File size must be less than 5MB');
-      return;
+      return null;
     }
 
     setIsUploading(true);
     setUploadProgress(0);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('type', uploadType);
-
-      const response = await fetch('/api/upload/image', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Upload failed');
-      }
-
-      const data = await response.json();
-      options.onSuccess?.(data.url);
-      return data.url;
+      const imageUrl = await uploadImageCloudinary(file, setIsUploading);
+      console.log(imageUrl, "image url !");
+      return imageUrl;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Upload failed';
       options.onError?.(errorMessage);

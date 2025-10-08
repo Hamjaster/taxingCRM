@@ -95,7 +95,7 @@ export default function RegisterForm({ userType }: RegisterFormProps) {
       if (formData.role === "admin") {
         router.push("/admin/login");
       } else {
-        router.push("/client/login");
+        router.push("/customer/login");
       }
     }
     // If registration fails, the error will be handled by Redux and displayed via the error state

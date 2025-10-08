@@ -12,11 +12,6 @@ export default function AdminLoginPage() {
           linkText: "Register here",
           href: "/admin/register",
         },
-        {
-          text: "Looking for client login?",
-          linkText: "Client Login",
-          href: "/client/login",
-        },
       ]}
     >
       <LoginForm userType="admin" />

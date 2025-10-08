@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Client from '@/models/Client';
+import Admin from '@/models/Admin';
 import { generateOTP, storeOTP, hasActiveOTP, getOTPRemainingTime } from '@/lib/otp';
 import { sendEmail, generateOTPEmailHTML, generateOTPEmailText } from '@/lib/nodemailer';
 
@@ -8,7 +9,7 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    const { email } = await request.json();
+    const { email, userType } = await request.json();
 
     // Validate required fields
     if (!email) {
@@ -18,18 +19,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find client by email
-    const client = await Client.findOne({ email: email.toLowerCase() });
+    // Find user by email and type
+    let user: any;
+    let userTypeLabel: string;
+    
+    if (userType === 'admin') {
+      user = await (Admin as any).findOne({ email: email.toLowerCase() });
+      userTypeLabel = 'admin';
+    } else {
+      user = await (Client as any).findOne({ email: email.toLowerCase() });
+      userTypeLabel = 'client';
+    }
 
-    if (!client) {
+    if (!user) {
       return NextResponse.json(
-        { success: false, message: 'No client found with this email address' },
+        { success: false, message: `No ${userTypeLabel} found with this email address` },
         { status: 404 }
       );
     }
 
-    // Check if client is active
-    if (client.status !== 'Active') {
+    // Check if user is active
+    if (user.status !== 'Active' && userType === 'client') {
       return NextResponse.json(
         { success: false, message: 'Account is deactivated. Please contact your administrator.' },
         { status: 401 }
@@ -54,13 +64,13 @@ export async function POST(request: NextRequest) {
     await storeOTP(email, otp, 10); // 10 minutes expiry
 
     // Prepare email content
-    const emailHTML = generateOTPEmailHTML(otp, client.firstName);
-    const emailText = generateOTPEmailText(otp, client.firstName);
+    const emailHTML = generateOTPEmailHTML(otp, user.firstName);
+    const emailText = generateOTPEmailText(otp, user.firstName);
 
     // Send OTP email
     const emailSent = await sendEmail({
       to: email,
-      subject: 'Your TaxingCRM Login Code',
+      subject: `Your TaxingCRM ${userType === 'admin' ? 'Admin' : 'Customer'} Login Code`,
       html: emailHTML,
       text: emailText,
     });

@@ -176,7 +176,7 @@ export default function ClientProfilePage({ params }: ClientProfilePageProps) {
                   <Avatar className="h-16 w-16">
                     <AvatarImage
                       src={
-                        selectedClient.avatar ||
+                        selectedClient.profileImage ||
                         "/placeholder.svg?height=64&width=64"
                       }
                     />

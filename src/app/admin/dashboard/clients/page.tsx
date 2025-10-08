@@ -96,6 +96,7 @@ export default function ClientListPage() {
   }, [clients, searchQuery, clientTypeFilter]);
 
   const handleAddClient = async (clientData: any) => {
+    console.log(clientData, "client data !");
     const resultAction = await dispatch(createClient(clientData));
     if (createClient.fulfilled.match(resultAction)) {
       console.log("Client created successfully");
@@ -129,7 +130,7 @@ export default function ClientListPage() {
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8">
             <AvatarImage
-              src={row.avatar || "/placeholder.svg?height=32&width=32"}
+              src={row.profileImage || "/placeholder.svg?height=32&width=32"}
             />
             <AvatarFallback className="bg-orange-100 text-orange-600 text-sm font-medium">
               {row.businessName
@@ -256,7 +257,7 @@ export default function ClientListPage() {
       {error && (
         <div className="flex-1 p-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <h3 className="text-red-800 font-medium">Error Loading Clients</h3>
+            <h3 className="text-red-800 font-medium">An Error Occurred</h3>
             <p className="text-red-600 text-sm mt-1">{error}</p>
           </div>
         </div>

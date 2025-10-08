@@ -110,6 +110,8 @@ export function Documents({
     isUploadingDocument,
     error,
     downloadUrl,
+    isDownloadingDocument,
+    isDeletingDocument,
   } = useAppSelector((state) => state.documents);
   const { user } = useAppSelector((st) => st.auth);
 
@@ -252,16 +254,20 @@ export function Documents({
 
   const handleDownloadDocument = async (document: DocumentItem) => {
     try {
-      await dispatch(downloadDocument(document._id)).unwrap();
-      if (downloadUrl) {
-        // trigger browser download
-        const link = window.document.createElement("a");
-        link.href = downloadUrl;
-        link.setAttribute("download", "");
-        window.document.body.appendChild(link);
-        link.click();
-        window.document.body.removeChild(link);
-      }
+      await dispatch(downloadDocument(document._id))
+        .unwrap()
+        .then((data) => {
+          if (data.downloadUrl) {
+            console.log("downloadUrl PRINTED", data.downloadUrl);
+            // trigger browser download
+            const link = window.document.createElement("a");
+            link.href = data.downloadUrl;
+            link.setAttribute("download", data.fileName);
+            window.document.body.appendChild(link);
+            link.click();
+            window.document.body.removeChild(link);
+          }
+        });
     } catch (error) {
       // Error handled by Redux
     }
@@ -375,6 +381,7 @@ export function Documents({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
+                      disabled={isDownloadingDocument}
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
@@ -382,9 +389,10 @@ export function Documents({
                       }}
                     >
                       <Download className="mr-2 h-4 w-4" />
-                      Download
+                      {isDownloadingDocument ? "Downloading..." : "Download"}
                     </DropdownMenuItem>
                     <DropdownMenuItem
+                      disabled={isDeletingDocument}
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
@@ -393,7 +401,7 @@ export function Documents({
                       className="text-red-600"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
+                      {isDeletingDocument ? "Deleting..." : "Delete"}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

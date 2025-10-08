@@ -4,6 +4,8 @@ import Admin from '@/models/Admin';
 import Client from '@/models/Client';
 import { verifyPassword, generateJWT } from '@/lib/auth';
 import { LoginCredentials } from '@/types';
+import { generateOTP, storeOTP, hasActiveOTP, getOTPRemainingTime } from '@/lib/otp';
+import { sendEmail, generateOTPEmailHTML, generateOTPEmailText } from '@/lib/nodemailer';
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,9 +22,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find user in both collections
-    const admin = await 
-    Admin.findOne({ email: email.toLowerCase() })
+    // Find admin by email
+    const admin = await Admin.findOne({ email: email.toLowerCase() });
 
     if (!admin) {
       return NextResponse.json(
@@ -31,35 +32,63 @@ export async function POST(request: NextRequest) {
       );
     }
 
-   
     // Verify password
     const isPasswordValid = await verifyPassword(password, admin.password);
 
     if (!isPasswordValid) {
       return NextResponse.json(
-        { success : false, message: 'Invalid credentials' },
+        { success: false, message: 'Invalid credentials' },
         { status: 401 }
       );
     }
 
-    // Update last login
-    admin.lastLogin = new Date();
-    await admin.save();
+    // Check if there's already an active OTP
+    if (await hasActiveOTP(email)) {
+      const remainingTime = await getOTPRemainingTime(email);
+      return NextResponse.json(
+        { 
+          success: false, 
+          requiresOTP: true,
+          message: `OTP already sent. Please check your email or wait ${remainingTime} minutes for a new code.`,
+          email: email,
+          remainingTime 
+        },
+        { status: 200 }
+      );
+    }
 
-    // Generate JWT token directly (no OTP required for login)
-    const token = generateJWT({
-      id: admin._id.toString(),
-      role: "admin",
+    // Generate and store OTP
+    const otp = generateOTP();
+    await storeOTP(email, otp, 10); // 10 minutes expiry
+
+    // Prepare email content
+    const emailHTML = generateOTPEmailHTML(otp, admin.firstName);
+    const emailText = generateOTPEmailText(otp, admin.firstName);
+
+    // Send OTP email
+    console.log('Sending OTP to admin:', email);
+    const emailSent = await sendEmail({
+      to: email,
+      subject: 'Your TaxingCRM Admin Login Code',
+      html: emailHTML,
+      text: emailText,
     });
 
-    // Create response with user data
-    const response = NextResponse.json({
-      message: 'Login successful',
-      data: {...admin._doc, token},
+    if (!emailSent) {
+      return NextResponse.json(
+        { error: 'Failed to send OTP email. Please try again.' },
+        { status: 500 }
+      );
+    }
+
+    // Return success response indicating OTP is required
+    return NextResponse.json({
       success: true,
+      requiresOTP: true,
+      message: 'Password verified. Please check your email for the OTP code.',
+      email: email,
+      expiryMinutes: 10,
     });
-
-    return response;
 
   } catch (error) {
     console.error('Login error:', error);

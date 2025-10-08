@@ -24,18 +24,11 @@ export function AvatarUpload({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { uploadImage, removeImage, isUploading } = useAvatarUpload({
-    onSuccess: (avatarUrl) => {
-      setPreviewUrl(null);
-      onAvatarChange?.(avatarUrl);
-    },
-    onError: (error) => {
-      setPreviewUrl(null);
-      alert(error);
-    },
-  });
+  const { uploadImage, removeImage, isUploading } = useAvatarUpload({});
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file) {
       console.log("No file selected");
@@ -47,7 +40,14 @@ export function AvatarUpload({
     setPreviewUrl(url);
 
     // Upload the file
-    uploadImage(file, "avatar");
+    const imageUrl = await uploadImage(file, "avatar");
+    if (!imageUrl) {
+      console.log("No image url !");
+      return;
+    }
+    console.log(imageUrl, "image url !");
+    setPreviewUrl(null);
+    onAvatarChange?.(imageUrl);
   };
 
   const handleRemoveAvatar = async () => {

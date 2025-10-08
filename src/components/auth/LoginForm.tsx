@@ -62,13 +62,13 @@ export default function LoginForm({ userType }: LoginFormProps) {
       console.log(result, "result after LOGIN");
 
       if (loginUser.fulfilled.match(result)) {
-        // Check if OTP is required (for client login)
+        // Check if OTP is required (for both admin and client login)
         if (result.payload.requiresOTP) {
           setOtpEmail(email);
           setRemainingTime(result.payload.remainingTime || 10);
           setShowOTP(true);
         }
-        // For admin login, user will be redirected via useEffect
+        // For successful login without OTP requirement, user will be redirected via useEffect
       }
     } catch (err) {
       console.error("Login error:", err);
@@ -78,7 +78,7 @@ export default function LoginForm({ userType }: LoginFormProps) {
   const handleOTPVerification = async (otpCode: string) => {
     try {
       const result = await dispatch(
-        verifyOTP({ email: otpEmail, otp: otpCode }) as any
+        verifyOTP({ email: otpEmail, otp: otpCode, userType }) as any
       );
 
       if (verifyOTP.fulfilled.match(result)) {
@@ -92,7 +92,9 @@ export default function LoginForm({ userType }: LoginFormProps) {
 
   const handleResendOTP = async () => {
     try {
-      const result = await dispatch(sendOTP(otpEmail) as any);
+      const result = await dispatch(
+        sendOTP({ email: otpEmail, userType }) as any
+      );
 
       if (sendOTP.fulfilled.match(result)) {
         setRemainingTime(result.payload.expiryMinutes || 10);
@@ -179,14 +181,12 @@ export default function LoginForm({ userType }: LoginFormProps) {
             isLoading={isLoading}
             className="w-full h-12 font-medium"
           >
-            {userType === "client" ? "Sign In & Send Code" : "Sign In"}
+            Sign In & Send Code
           </Button>
 
-          {userType === "client" && (
-            <p className="text-xs text-gray-500 text-center">
-              For security, clients will receive a verification code via email
-            </p>
-          )}
+          <p className="text-xs text-gray-500 text-center">
+            For security, you will receive a verification code via email
+          </p>
         </form>
       </CardContent>
     </Card>

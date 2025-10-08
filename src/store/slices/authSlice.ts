@@ -63,7 +63,7 @@ export const loginUser = createAsyncThunk(
         return rejectWithValue(data.message || data.error || 'Login failed');
       }
 
-      // Handle OTP requirement for client login
+      // Handle OTP requirement for both admin and client login
       if (data.requiresOTP) {
         return {
           requiresOTP: true,
@@ -258,14 +258,14 @@ export const updateClientDetails = createAsyncThunk(
 // Async thunk for sending OTP
 export const sendOTP = createAsyncThunk(
   'auth/sendOTP',
-  async (email: string, { rejectWithValue }) => {
+  async ({ email, userType }: { email: string; userType: 'admin' | 'client' }, { rejectWithValue }) => {
     try {
       const response = await fetch(`${API_URL}/api/auth/send-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, userType }),
       });
 
       const data = await response.json();
@@ -284,14 +284,14 @@ export const sendOTP = createAsyncThunk(
 // Async thunk for verifying OTP
 export const verifyOTP = createAsyncThunk(
   'auth/verifyOTP',
-  async ({ email, otp }: { email: string; otp: string }, { rejectWithValue }) => {
+  async ({ email, otp, userType }: { email: string; otp: string; userType: 'admin' | 'client' }, { rejectWithValue }) => {
     try {
       const response = await fetch(`${API_URL}/api/auth/verify-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, otp }),
+        body: JSON.stringify({ email, otp, userType }),
       });
 
       const data = await response.json();
@@ -300,7 +300,7 @@ export const verifyOTP = createAsyncThunk(
         return rejectWithValue(data.message || data.error || 'OTP verification failed');
       }
 
-      return data;
+      return {...data, role: userType};
     } catch (error) {
       return rejectWithValue('Network error occurred');
     }
@@ -588,7 +588,7 @@ const authSlice = createSlice({
       .addCase(verifyOTP.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload.data;
-        state.role = 'client';
+        state.role = action.payload.role;
         state.isAuthenticated = true;
         state.error = null;
         localStorage.setItem('token', action.payload.data.token);

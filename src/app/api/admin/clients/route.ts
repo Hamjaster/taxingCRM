@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const clients = await Client.find({ 
       assignedAdminId: adminUser.id,
     })
-    .select('firstName lastName email phone isEmailVerified isPhoneVerified status lastLogin createdAt clientType assignedAdminId')
+    .select('firstName lastName email phone isEmailVerified isPhoneVerified status lastLogin createdAt profileImage clientType assignedAdminId')
     .sort({ createdAt: -1 });
 
     return NextResponse.json({ data: clients, success: true });
