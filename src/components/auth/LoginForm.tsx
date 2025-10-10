@@ -65,7 +65,7 @@ export default function LoginForm({ userType }: LoginFormProps) {
         // Check if OTP is required (for both admin and client login)
         if (result.payload.requiresOTP) {
           setOtpEmail(email);
-          setRemainingTime(result.payload.remainingTime || 10);
+          setRemainingTime(result.payload.remainingTime || 1);
           setShowOTP(true);
         }
         // For successful login without OTP requirement, user will be redirected via useEffect
@@ -97,7 +97,7 @@ export default function LoginForm({ userType }: LoginFormProps) {
       );
 
       if (sendOTP.fulfilled.match(result)) {
-        setRemainingTime(result.payload.expiryMinutes || 10);
+        setRemainingTime(result.payload.expiryMinutes || 1);
         dispatch(clearError());
       }
     } catch (err: any) {

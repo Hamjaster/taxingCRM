@@ -22,9 +22,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import NotificationBell from "../ui/NotificationsBell";
+import { useRouter } from "next/navigation";
 
 export function DashboardHeader() {
   const { user, logout } = useAuth();
+  const router = useRouter();
 
   const getUserInitials = () => {
     if (user && "firstName" in user && "lastName" in user) {
@@ -86,11 +88,15 @@ export function DashboardHeader() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => router.push("/admin/dashboard/settings")}
+            >
               <User className="mr-2 h-4 w-4" />
               <span>Profile</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => router.push("/admin/dashboard/settings")}
+            >
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
             </DropdownMenuItem>

@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     // Generate and store OTP
     const otp = generateOTP();
-    await storeOTP(email, otp, 10); // 10 minutes expiry
+    await storeOTP(email, otp, 1); // 1 minute expiry
 
     // Prepare email content
     const emailHTML = generateOTPEmailHTML(otp, client.firstName);
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       requiresOTP: true,
       message: 'Password verified. Please check your email for the OTP code.',
       email: email,
-      expiryMinutes: 10,
+      expiryMinutes: 1,
     });
 
   } catch (error) {

@@ -143,7 +143,7 @@ export default function OTPForm({
           <Button
             type="button"
             variant="outline"
-            className="w-full h-12 border-gray-200 hover:bg-gray-50 transition-colors bg-transparent"
+            className="w-full h-12 border-gray-200 hover:text-gray-100 transition-colors bg-transparent"
             onClick={handleResend}
             disabled={isLoading || !canResend}
           >

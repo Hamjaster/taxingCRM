@@ -68,7 +68,7 @@ export const loginUser = createAsyncThunk(
         return {
           requiresOTP: true,
           email: data.email,
-          remainingTime: data.remainingTime,
+          remainingTime: data.expiryMinutes,
           message: data.message,
         };
       }

@@ -46,6 +46,6 @@ export function isOTPExpired(otpExpiry: Date): boolean {
 
 export function getOTPExpiry(): Date {
   const expiry = new Date();
-  expiry.setMinutes(expiry.getMinutes() + 10); // OTP expires in 10 minutes
+  expiry.setMinutes(expiry.getMinutes() + 1); // OTP expires in 1 minute
   return expiry;
 }

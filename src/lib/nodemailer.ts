@@ -128,7 +128,7 @@ export function generateOTPEmailHTML(otp: string, firstName: string): string {
                 
                 <div class="otp-box">
                     <div class="otp-code">${otp}</div>
-                    <p style="margin: 10px 0 0 0; color: #6b7280;">This code expires in 10 minutes</p>
+                    <p style="margin: 10px 0 0 0; color: #6b7280;">This code expires in 1 minute</p>
                 </div>
                 
                 <p>Enter this code on the login page to access your account.</p>
@@ -167,7 +167,7 @@ You have requested to log in to your TaxingCRM client account. Please use the fo
 
 Your OTP Code: ${otp}
 
-This code expires in 10 minutes.
+This code expires in 1 minute.
 
 Enter this code on the login page to access your account.
 

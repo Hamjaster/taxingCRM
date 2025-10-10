@@ -36,11 +36,13 @@ type IndividualTabType =
   | "spouse"
   | "dependent"
   | "address"
+  | "security"
   | "clientNote";
 type BusinessTabType =
   | "businessInfo"
   | "address"
   | "shareholders"
+  | "security"
   | "clientNote";
 type EntityTabType =
   | "entityInfo"
@@ -49,6 +51,7 @@ type EntityTabType =
   | "serviceOfProcess"
   | "registeredAgent"
   | "publication"
+  | "security"
   | "clientNote";
 
 interface Shareholder {
@@ -74,6 +77,9 @@ interface FormData {
   email: string;
   status: string;
   profileImage?: string;
+  // Password fields
+  newPassword: string;
+  confirmPassword: string;
   // Spouse fields
   spouseFirstName: string;
   spouseMi: string;
@@ -142,6 +148,8 @@ const initialFormData: FormData = {
   phoneNo: "",
   email: "",
   status: "Active",
+  newPassword: "",
+  confirmPassword: "",
   spouseFirstName: "",
   spouseMi: "",
   spouseLastName: "",
@@ -208,6 +216,7 @@ export function EditClientDialog({
     IndividualTabType | BusinessTabType | EntityTabType
   >("taxpayer");
   const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   // Populate form data when client changes
   useEffect(() => {
@@ -272,6 +281,8 @@ export function EditClientDialog({
         registeredAgentName: client.registeredAgentName || "",
         registeredAgentAddress: client.registeredAgentAddress || "",
         publicationDetails: client.publicationDetails || "",
+        newPassword: "",
+        confirmPassword: "",
       };
 
       setFormData(populatedData);
@@ -311,6 +322,7 @@ export function EditClientDialog({
         { id: "businessInfo", label: "Business Info." },
         { id: "address", label: "Address" },
         { id: "shareholders", label: "Shareholders" },
+        { id: "security", label: "Security" },
         { id: "clientNote", label: "Client Note" },
       ];
     } else if (formData.clientType === "Entity") {
@@ -321,6 +333,7 @@ export function EditClientDialog({
         { id: "serviceOfProcess", label: "Service of Process" },
         { id: "registeredAgent", label: "Registered Agent" },
         { id: "publication", label: "Publication" },
+        { id: "security", label: "Security" },
         { id: "clientNote", label: "Client Note" },
       ];
     }
@@ -329,6 +342,7 @@ export function EditClientDialog({
       { id: "spouse", label: "Spouse" },
       { id: "dependent", label: "Dependent" },
       { id: "address", label: "Address" },
+      { id: "security", label: "Security" },
       { id: "clientNote", label: "Client Note" },
     ];
   };
@@ -490,6 +504,72 @@ export function EditClientDialog({
 
   const updateFormData = (field: keyof FormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handlePasswordUpdate = async () => {
+    if (!client) return;
+
+    // Validate password fields
+    if (!formData.newPassword.trim()) {
+      alert("Please enter a new password");
+      return;
+    }
+
+    if (formData.newPassword !== formData.confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    if (formData.newPassword.length < 8) {
+      alert("Password must be at least 8 characters long");
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+
+    try {
+      // Get token from localStorage
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        alert("Authentication token not found. Please log in again.");
+        setIsUpdatingPassword(false);
+        return;
+      }
+
+      const response = await fetch(
+        `/api/admin/clients/${client._id}/password`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            newPassword: formData.newPassword,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert("Password updated successfully!");
+        // Clear password fields
+        setFormData((prev) => ({
+          ...prev,
+          newPassword: "",
+          confirmPassword: "",
+        }));
+      } else {
+        alert(result.message || "Failed to update password");
+      }
+    } catch (error) {
+      console.error("Password update error:", error);
+      alert("An error occurred while updating the password");
+    } finally {
+      setIsUpdatingPassword(false);
+    }
   };
 
   const addShareholder = () => {
@@ -1214,6 +1294,115 @@ export function EditClientDialog({
     </div>
   );
 
+  const renderSecurityTab = () => (
+    <div className="space-y-6">
+      <h3 className="text-lg font-semibold text-gray-900">Security Settings</h3>
+
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <svg
+              className="h-5 w-5 text-yellow-400"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-yellow-800">
+              Password Reset
+            </h3>
+            <div className="mt-2 text-sm text-yellow-700">
+              <p>
+                You can reset the client's password here. The new password will
+                be immediately active.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="newPassword">
+            New Password <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="newPassword"
+            type="password"
+            placeholder="Enter new password"
+            value={formData.newPassword}
+            onChange={(e) => updateFormData("newPassword", e.target.value)}
+            required
+          />
+          <p className="text-xs text-gray-500">
+            Password must be at least 8 characters long and contain at least one
+            uppercase letter, one lowercase letter, and one number.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">
+            Confirm Password <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="confirmPassword"
+            type="password"
+            placeholder="Confirm new password"
+            value={formData.confirmPassword}
+            onChange={(e) => updateFormData("confirmPassword", e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="flex justify-end">
+          <Button
+            onClick={handlePasswordUpdate}
+            className="bg-red-600 hover:bg-red-700"
+            disabled={
+              !formData.newPassword ||
+              !formData.confirmPassword ||
+              isUpdatingPassword
+            }
+          >
+            {isUpdatingPassword ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Updating...
+              </>
+            ) : (
+              "Update Password"
+            )}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
   // Entity Info Tab
   const renderEntityInfoTab = () => (
     <div className="space-y-6">
@@ -1509,6 +1698,8 @@ export function EditClientDialog({
           return renderAddressTab();
         case "shareholders":
           return renderShareholdersTab();
+        case "security":
+          return renderSecurityTab();
         case "clientNote":
           return renderClientNoteTab();
         default:
@@ -1528,6 +1719,8 @@ export function EditClientDialog({
           return renderRegisteredAgentTab();
         case "publication":
           return renderPublicationTab();
+        case "security":
+          return renderSecurityTab();
         case "clientNote":
           return renderClientNoteTab();
         default:
@@ -1543,6 +1736,8 @@ export function EditClientDialog({
           return renderDependentTab();
         case "address":
           return renderAddressTab();
+        case "security":
+          return renderSecurityTab();
         case "clientNote":
           return renderClientNoteTab();
         default:

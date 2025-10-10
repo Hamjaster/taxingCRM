@@ -63,6 +63,11 @@ const menuItems = [
     icon: PenTool,
     href: "/admin/dashboard/blog",
   },
+  {
+    title: "Settings",
+    icon: Settings,
+    href: "/admin/dashboard/settings",
+  },
 ];
 
 export function AppSidebar() {
@@ -198,11 +203,17 @@ export function AppSidebar() {
                 </div>
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => router.push("/admin/dashboard/settings")}
+              >
                 <User className="h-4 w-4 mr-2" />
                 Profile Settings
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => router.push("/admin/dashboard/settings")}
+              >
                 <Settings className="h-4 w-4 mr-2" />
                 Account Settings
               </DropdownMenuItem>
