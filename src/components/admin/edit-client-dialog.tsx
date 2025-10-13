@@ -1340,7 +1340,7 @@ export function EditClientDialog({
             onChange={(e) => updateFormData("newPassword", e.target.value)}
             required
           />
-          <p className="text-xs text-gray-500">
+          <p className="tbext-xs text-gray-500">
             Password must be at least 8 characters long and contain at least one
             uppercase letter, one lowercase letter, and one number.
           </p>

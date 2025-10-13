@@ -285,6 +285,21 @@ export function Documents({
     }
   };
 
+  const handleDocumentClick = async (document: DocumentItem) => {
+    try {
+      // Get the download URL for the document
+      await dispatch(downloadDocument(document._id))
+        .unwrap()
+        .then((data) => {
+          if (data.downloadUrl) {
+            window.open(data.downloadUrl, "_blank");
+          }
+        });
+    } catch (error) {
+      // Error handled by Redux
+    }
+  };
+
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -367,7 +382,10 @@ export function Documents({
             {currentFolderDocuments.map((document) => (
               <div
                 key={document._id}
-                className="relative flex p-6 space-y-5 border rounded-lg shadow-sm flex-col items-start group"
+                className="relative flex p-6 space-y-5 border rounded-lg shadow-sm flex-col items-start group cursor-pointer hover:shadow-md transition-shadow duration-200"
+                onClick={() => handleDocumentClick(document)}
+                onDoubleClick={() => handleDocumentClick(document)}
+                title="Click or double-click to open document"
               >
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -375,6 +393,7 @@ export function Documents({
                       variant="ghost"
                       size="sm"
                       className="absolute top-3 right-3 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <MoreHorizontal className="w-4 h-4" />
                     </Button>
