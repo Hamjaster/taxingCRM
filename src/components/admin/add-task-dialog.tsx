@@ -96,6 +96,7 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
       if (!hasFetchedClients) {
         dispatch(fetchAdminClients());
       }
+      // Always fetch categories when dialog opens to ensure we have the latest data
       dispatch(fetchTaskCategories());
     }
   }, [open, hasFetchedClients, dispatch]);
@@ -189,6 +190,8 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
       setFormData((prev) => ({ ...prev, category: result.payload.name }));
       setShowCategoryDialog(false);
       setNewCategoryName("");
+      // Refetch categories to ensure we have the latest list from the server
+      dispatch(fetchTaskCategories());
     }
 
     setIsAddingCategory(false);
